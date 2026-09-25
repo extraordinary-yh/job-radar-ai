@@ -1,0 +1,32 @@
+{
+ "total": 229,
+ "jobPostings": [
+  {
+   "title": "Policy Operations",
+   "externalPath": "/job/Washington---Seattle/Policy-Operations_JR357329",
+   "locationsText": "Washington - Seattle",
+   "postedOn": "Posted Today",
+   "bulletFields": [
+    "JR357329"
+   ]
+  },
+  {
+   "title": "Product Security Senior",
+   "externalPath": "/job/Washington---Bellevue/Product-Security-Senior_JR355872-1",
+   "locationsText": "2 Locations",
+   "postedOn": "Posted Today",
+   "bulletFields": [
+    "JR355872"
+   ]
+  },
+  {
+   "title": "Account Executive, Employee Service - SMB/Commercial",
+   "externalPath": "/job/California---Irvine/Commercial-Account-Executive--Employee-Service_JR287441",
+   "locationsText": "5 Locations",
+   "postedOn": "Posted Today",
+   "bulletFields": [
+    "JR287441"
+   ]
+  }
+ ]
+}

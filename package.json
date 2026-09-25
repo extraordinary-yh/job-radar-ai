@@ -1,0 +1,9 @@
+{
+  "name": "job-radar-node",
+  "private": true,
+  "description": "Node runtime for the vendored career-ops scripts (vendor/career-ops); install with `npm ci --ignore-scripts`",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "js-yaml": "^5.3.0"
+  }
+}

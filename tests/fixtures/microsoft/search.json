@@ -1,0 +1,91 @@
+{
+ "status": 200,
+ "error": {
+  "message": "",
+  "body": ""
+ },
+ "data": {
+  "positions": [
+   {
+    "id": 1970393556972075,
+    "displayJobId": "200049454",
+    "name": "Principal Software Engineer",
+    "locations": [
+     "United States, New York, New York",
+     "United States, Washington, Redmond",
+     "United States, California, San Francisco"
+    ],
+    "standardizedLocations": [
+     "New York, NY, US",
+     "Redmond, WA, US",
+     "San Francisco, CA, US"
+    ],
+    "postedTs": 1787950916,
+    "solrScore": null,
+    "stars": 0,
+    "department": "Software Engineering",
+    "creationTs": 1786994338,
+    "isHot": 0,
+    "workLocationOption": "onsite",
+    "locationFlexibility": null,
+    "atsJobId": "200049454",
+    "positionUrl": "/careers/job/1970393556972075"
+   },
+   {
+    "id": 1970393556746669,
+    "displayJobId": "200023147",
+    "name": "Senior Software Engineer",
+    "locations": [
+     "United States, New York, New York",
+     "United States, Washington, Redmond"
+    ],
+    "standardizedLocations": [
+     "New York, NY, US",
+     "Redmond, WA, US"
+    ],
+    "postedTs": 1782946482,
+    "solrScore": null,
+    "stars": 0,
+    "department": "Software Engineering",
+    "creationTs": 1769208511,
+    "isHot": 0,
+    "workLocationOption": "onsite",
+    "locationFlexibility": null,
+    "atsJobId": "200023147",
+    "positionUrl": "/careers/job/1970393556746669"
+   },
+   {
+    "id": 1970393556754916,
+    "displayJobId": "200027546",
+    "name": "Senior/Principal Software Engineer - Growth (CoreAI)",
+    "locations": [
+     "United States, New York, New York",
+     "United States, California, Mountain View",
+     "United States, California, San Francisco",
+     "United States, Washington, Redmond",
+     "United States, Massachusetts, Boston"
+    ],
+    "standardizedLocations": [
+     "New York, NY, US",
+     "Mountain View, CA, US",
+     "San Francisco, CA, US",
+     "Redmond, WA, US",
+     "Boston, MA, US"
+    ],
+    "postedTs": 1783457502,
+    "solrScore": null,
+    "stars": 0,
+    "department": "Software Engineering",
+    "creationTs": 1771003236,
+    "isHot": 0,
+    "workLocationOption": "onsite",
+    "locationFlexibility": null,
+    "atsJobId": "200027546",
+    "positionUrl": "/careers/job/1970393556754916"
+   }
+  ],
+  "count": 29,
+  "sortBy": "relevance"
+ },
+ "metadata": null
+}

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>{{ title }}</title>
+<style>
+:root { --bg:oklch(0.98 0.005 250); --fg:oklch(0.22 0.025 250); --muted:oklch(0.52 0.02 250); --card:oklch(1 0 0);
+  --line:oklch(0.9 0.012 250); --accent:oklch(0.48 0.13 245); --accent-2:oklch(0.56 0.12 240); --on-accent:oklch(0.99 0.005 250);
+  --bad:oklch(0.52 0.13 25); --sh:0 8px 24px oklch(0.22 0.03 250 / .1), 0 2px 6px oklch(0.22 0.03 250 / .05); color-scheme:light; }
+@media (prefers-color-scheme: dark) { :root { --bg:oklch(0.16 0.018 250); --fg:oklch(0.95 0.01 250); --muted:oklch(0.7 0.02 250);
+  --card:oklch(0.21 0.02 250); --line:oklch(0.3 0.02 250); --accent:oklch(0.72 0.11 240); --accent-2:oklch(0.8 0.09 238);
+  --on-accent:oklch(0.16 0.02 250); --bad:oklch(0.72 0.12 25); --sh:0 10px 28px oklch(0 0 0 / .5); color-scheme:dark; } }
+*,*::before,*::after { box-sizing:border-box }
+body { margin:0; background:var(--bg); color:var(--fg); -webkit-font-smoothing:antialiased;
+  font:15px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  display:flex; min-height:100vh; align-items:center; justify-content:center; padding:20px }
+main { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:28px; width:min(92vw,380px); box-shadow:var(--sh) }
+h1 { font-size:19px; font-weight:660; letter-spacing:-.02em; margin:0 0 6px } p { margin:0 0 16px; font-size:13.5px; color:var(--muted) }
+input[type=password] { width:100%; font:inherit; padding:11px 12px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg) }
+input[type=password]:focus { outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent) }
+label { display:block; font-size:13px; color:var(--muted); margin:12px 0 }
+button { font:inherit; font-weight:600; width:100%; padding:11px; border:0; border-radius:8px; background:var(--accent); color:var(--on-accent); cursor:pointer; transition:background .15s }
+button:hover { background:var(--accent-2) }
+#err { color:var(--bad); min-height:1.2em; font-size:13px; margin-top:10px }
+</style>
+</head>
+<body>
+<main>
+<h1>{{ heading }}</h1>
+<p>{{ prompt }}</p>
+<form id="f">
+  <input id="p" type="password" autocomplete="current-password" placeholder="passphrase" autofocus>
+  <label><input id="r" type="checkbox" checked> remember on this device</label>
+  <button type="submit">Open</button>
+</form>
+<div id="err"></div>
+</main>
+<script id="payload" type="application/json">{{ payload_json }}</script>
+<script>
+(function(){
+  var payload = JSON.parse(document.getElementById("payload").textContent);
+  var err = document.getElementById("err");
+  function b64(s){ var bin = atob(s), arr = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); return arr; }
+  function toB64(buf){ var s = ""; new Uint8Array(buf).forEach(function(b){ s += String.fromCharCode(b); }); return btoa(s); }
+  async function deriveKey(pass){
+    var base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey({name: "PBKDF2", salt: b64(payload.salt), iterations: payload.iterations, hash: "SHA-256"},
+                                   base, {name: "AES-GCM", length: 256}, true, ["decrypt"]);
+  }
+  async function show(key){
+    var pt = await crypto.subtle.decrypt({name: "AES-GCM", iv: b64(payload.nonce)}, key, b64(payload.ct));
+    var html = new TextDecoder().decode(pt);
+    document.open(); document.write(html); document.close();
+  }
+  async function tryStored(){
+    var raw = null;
+    try { raw = localStorage.getItem("jobradar.key"); } catch (e) { return; }
+    if (!raw) return;
+    try { await show(await crypto.subtle.importKey("raw", b64(raw), {name: "AES-GCM"}, true, ["decrypt"])); }
+    catch (e) { try { localStorage.removeItem("jobradar.key"); } catch (_) {} }
+  }
+  document.getElementById("f").addEventListener("submit", async function(ev){
+    ev.preventDefault();
+    err.textContent = "Opening…";
+    try {
+      var key = await deriveKey(document.getElementById("p").value);
+      if (document.getElementById("r").checked) { try { localStorage.setItem("jobradar.key", toB64(await crypto.subtle.exportKey("raw", key))); } catch (_) {} }
+      await show(key);
+    } catch (e) { err.textContent = "Wrong passphrase."; }
+  });
+  tryStored();
+})();
+</script>
+</body>
+</html>

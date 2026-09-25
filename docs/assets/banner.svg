@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="480" viewBox="0 0 1280 480" role="img" aria-label="Job Radar AI">
+<rect width="1280" height="480" rx="24" fill="#101820"/>
+<circle cx="1160" cy="115" r="240" fill="#78e8ba" opacity=".06"/>
+<path d="M910 70h225v260H910z M945 35h225v260" fill="none" stroke="#78e8ba" stroke-opacity=".18" stroke-width="2"/>
+<g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">
+<text x="64" y="62" fill="#78e8ba" font-size="14" letter-spacing="3">JOB SEARCH AI / OPEN SOURCE</text>
+<text x="60" y="150" fill="#f4f7fa" font-size="64" font-weight="700" letter-spacing="-2">Job Radar AI</text>
+<text x="64" y="211" fill="#f4f7fa" font-size="29">Find the right roles. Know why they fit.</text>
+<text x="64" y="255" fill="#a9b8c8" font-size="21">Transparent ranking + agent fit reviews + a local job board</text>
+<path d="M64 300H1216" stroke="#30404d"/>
+<text x="64" y="357" fill="#78e8ba" font-size="14">01</text><text x="99" y="357" fill="#e4eaf0" font-size="18" font-weight="600">DISCOVER</text><text x="454" y="357" fill="#78e8ba" font-size="14">02</text><text x="489" y="357" fill="#e4eaf0" font-size="18" font-weight="600">REVIEW FIT</text><text x="844" y="357" fill="#78e8ba" font-size="14">03</text><text x="879" y="357" fill="#e4eaf0" font-size="18" font-weight="600">ACT ON EVIDENCE</text><text x="64" y="427" fill="#8497a9" font-size="16">Local files. Visible decisions. You stay in control.</text></g></svg>

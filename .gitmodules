@@ -1,0 +1,3 @@
+[submodule "vendor/career-ops"]
+	path = vendor/career-ops
+	url = https://github.com/career-ops-hq/career-ops.git

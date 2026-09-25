@@ -1,0 +1,153 @@
+candidate:
+  effective_yoe: 2
+  home_metro: remote_us
+titles:
+  require_family: true
+  include:
+  - name: swe
+    patterns:
+    - software engineer
+    - software developer
+    - software dev(elopment)? engineer
+    - \bsde\b
+    - full[- ]?stack
+    - back[- ]?end
+    - platform engineer
+    - member of technical staff
+    - \bmts\b
+    - infrastructure engineer
+    - web engineer
+    - application engineer
+  - name: ml_ai
+    patterns:
+    - machine learning engineer
+    - \bml engineer
+    - \bai engineer
+    - applied ai
+    - \bllm\b
+    - genai
+    - generative ai
+    - ai/ml
+    - ai platform
+    - agent engineer
+    - ai infrastructure
+  - name: product_eng
+    patterns:
+    - product engineer
+  - name: fde
+    patterns:
+    - forward[- ]deployed
+    - solutions engineer
+    - customer engineer
+    - deployment strategist
+    - implementation engineer
+    - applied engineer
+  - name: founding
+    patterns:
+    - founding engineer
+    - early[- ]stage
+    - generalist engineer
+    - engineer, generalist
+  exclude_patterns:
+  - product manager
+  - program manager
+  - project manager
+  - engineering manager
+  - \bdirector\b
+  - \bvp\b
+  - vice president
+  - recruit
+  - \bsales\b
+  - account executive
+  - hardware
+  - mechanical
+  - electrical
+  - \bintern\b
+  - internship
+  - \bprincipal\b
+  - ^staff\b|\bstaff (software|machine|ml|ai|data|product|research|engineer)
+  - distinguished
+  - \bfellow\b
+  - head of
+  - \bchief\b
+  - site reliability
+  - \bsre\b
+  - security engineer
+  - data center
+  - technician
+  - \bphd\b
+  - research engineer
+  - research scientist
+  - strategy & operations
+  - strategy and operations
+  - revenue operations
+  - \bit solutions\b
+  - emerging talent
+locations:
+  scores:
+    nyc: 20
+    remote_us: 20
+    bay: 15
+    other_us: 4
+    unknown: 6
+  exclude_non_us: true
+experience:
+  yoe_scores:
+    0: 20
+    1: 20
+    2: 10
+    3: 0
+  max_yoe_by_size:
+    small: 3
+    big: 2
+  level_scores:
+    new_grad: 20
+    early: 20
+    mid: 20
+    senior: 10
+    unknown: 16
+  senior_cap: 10
+  exclude_levels:
+  - intern
+  - staff
+  - manager
+  preferred_yoe_cap_at: 4
+  preferred_yoe_cap_points: 5
+skills:
+  max_points: 40
+  full_marks: 15
+  weights:
+    python: 3
+    typescript: 3
+    react: 2
+    node: 2
+    postgres: 2
+    docker: 1
+    llm: 2
+    eval: 2
+recency:
+  days_scores:
+  - - 3
+    - 10
+  - - 7
+    - 7
+  - - 14
+    - 4
+  default: 1
+flags:
+  exclude: []
+penalties: {}
+weights:
+  title: 10
+  location: 20
+  experience: 20
+  skills: 40
+  recency: 10
+review:
+  candidate_min_score: 40
+  max_candidates: 250
+referrals:
+  min_score: 75
+  skip_companies: []
+salary:
+  floor: null

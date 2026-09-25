@@ -1,0 +1,579 @@
+{% macro icon(n) %}<svg class="i" aria-hidden="true"><use href="#i-{{ n }}"></use></svg>{% endmacro %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Radar AI · {{ date }}</title>
+<style>
+[hidden] { display:none !important; }
+/* --- design tokens ------------------------------------------------------
+ * One brand hue (an ultramarine, the blue of a Van Gogh night) carries every
+ * accent. Colour is a scarce signal here: a badge is neutral unless its fact
+ * changes the decision, so the eye lands on the title, then the one accented
+ * thing on the card, then the greys.
+ */
+:root {
+  --bg:oklch(0.98 0.005 262); --panel:oklch(1 0 0); --panel-2:oklch(0.985 0.006 262);
+  --fg:oklch(0.22 0.028 262); --muted:oklch(0.52 0.022 262); --faint:oklch(0.63 0.02 262);
+  --line:oklch(0.9 0.014 262); --line-soft:oklch(0.945 0.009 262); --chip:oklch(0.955 0.012 262);
+  --accent:oklch(0.43 0.16 266); --accent-2:oklch(0.53 0.15 262); --accent-soft:oklch(0.935 0.035 266);
+  --accent-ink:oklch(0.38 0.15 266); --on-accent:oklch(0.99 0.005 260);
+  --good:oklch(0.5 0.09 195);  --good-soft:oklch(0.95 0.025 195);
+  --warn:oklch(0.5 0.07 70);   --warn-soft:oklch(0.955 0.018 80);
+  --bad:oklch(0.52 0.13 25);   --bad-soft:oklch(0.95 0.025 25);
+  --r-sm:8px; --r-md:11px; --r-lg:14px; --r-pill:999px;
+  --sh-1:0 1px 2px oklch(0.22 0.03 262 / .05), 0 1px 3px oklch(0.22 0.03 262 / .04);
+  --sh-2:0 8px 24px oklch(0.22 0.03 262 / .1), 0 2px 6px oklch(0.22 0.03 262 / .05);
+  --sh-3:0 24px 60px oklch(0.18 0.03 262 / .22);
+  --maxw:1720px; --pad:clamp(16px,3vw,40px);
+  --ease:cubic-bezier(.32,.72,0,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:oklch(0.16 0.02 262); --panel:oklch(0.21 0.022 262); --panel-2:oklch(0.245 0.022 262);
+    --fg:oklch(0.95 0.012 262); --muted:oklch(0.7 0.022 262); --faint:oklch(0.6 0.022 262);
+    --line:oklch(0.3 0.024 262); --line-soft:oklch(0.26 0.022 262); --chip:oklch(0.26 0.022 262);
+    --accent:oklch(0.7 0.14 264); --accent-2:oklch(0.79 0.12 262); --accent-soft:oklch(0.31 0.07 266);
+    --accent-ink:oklch(0.85 0.09 264); --on-accent:oklch(0.16 0.02 260);
+    --good:oklch(0.75 0.09 190); --good-soft:oklch(0.28 0.04 190);
+    --warn:oklch(0.78 0.08 75);  --warn-soft:oklch(0.3 0.04 70);
+    --bad:oklch(0.72 0.12 25);   --bad-soft:oklch(0.3 0.06 25);
+    --sh-1:0 1px 2px oklch(0 0 0 / .4); --sh-2:0 10px 28px oklch(0 0 0 / .5); --sh-3:0 24px 60px oklch(0 0 0 / .6);
+    color-scheme:dark;
+  }
+}
+*,*::before,*::after { box-sizing:border-box }
+html { -webkit-text-size-adjust:100% }
+body { margin:0; background:var(--bg); color:var(--fg); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  font:15px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif; }
+a { color:var(--accent) } :focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:4px }
+::selection { background:var(--accent-soft) }
+.i { width:14px; height:14px; flex:none; vertical-align:-2px;
+  fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round }
+
+/* --- shell -------------------------------------------------------------- */
+main { max-width:var(--maxw); margin:0 auto; padding:0 var(--pad) 72px }
+.masthead { padding:28px 0 6px }
+h1 { font-size:clamp(20px,2.2vw,26px); font-weight:680; letter-spacing:-.02em; margin:0; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap }
+h1 .dot { color:var(--faint); font-weight:400 }
+.sub { color:var(--muted); font-size:13.5px }
+.masthead .sub { margin-top:6px }
+
+/* KPI strip — the only place a number is allowed to be loud */
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:10px; margin:18px 0 4px }
+.stat { background:var(--panel); border:1px solid var(--line); border-radius:var(--r-md); padding:11px 13px; box-shadow:var(--sh-1) }
+.stat b { display:block; font-size:22px; font-weight:650; line-height:1.15; font-variant-numeric:tabular-nums; letter-spacing:-.02em }
+.stat span { display:block; font-size:11px; color:var(--faint); text-transform:uppercase; letter-spacing:.06em; margin-top:2px }
+.stat.accent b { color:var(--accent) }
+
+.strip { display:flex; flex-wrap:wrap; gap:6px; margin:14px 0 0; font-size:11.5px }
+.src { padding:3px 9px; border-radius:var(--r-pill); background:var(--chip); color:var(--faint) }
+.src.bad { color:var(--bad); background:var(--bad-soft) }
+.warn { display:flex; gap:8px; align-items:flex-start; color:var(--warn); background:var(--warn-soft); border-radius:var(--r-sm); padding:8px 12px; font-size:13px; margin:8px 0 0 }
+
+/* --- sticky toolbar ----------------------------------------------------- */
+.filters { position:sticky; top:0; z-index:15; display:flex; flex-wrap:wrap; gap:7px; align-items:center;
+  margin:16px calc(-1 * var(--pad)) 0; padding:11px var(--pad); background:var(--bg); border-bottom:1px solid var(--line); }
+@supports (backdrop-filter:blur(1px)) { .filters { background:color-mix(in oklab, var(--bg) 78%, transparent); backdrop-filter:saturate(180%) blur(14px) } }
+.chip { border:1px solid var(--line); background:var(--panel); color:var(--muted); border-radius:var(--r-pill);
+  padding:5px 12px; font:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:color .15s, border-color .15s, background .15s }
+.chip:hover { border-color:var(--accent); color:var(--accent) }
+.chip.on { background:var(--accent); color:var(--on-accent); border-color:var(--accent) }
+select { font:inherit; font-size:13px; padding:5px 9px; border-radius:var(--r-sm); border:1px solid var(--line);
+  background:var(--panel); color:var(--muted); cursor:pointer }
+.filters .sub { color:var(--line); user-select:none }
+
+/* --- card grid ---------------------------------------------------------- */
+/* stretch, so cards sharing a row end at the same edge instead of stair-stepping */
+#cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,540px),1fr)); gap:16px; margin:20px 0 0; align-items:stretch }
+.card { container-type:inline-size; position:relative; isolation:isolate; background:var(--panel);
+  border:1px solid var(--line); border-radius:var(--r-lg); padding:20px 22px; margin:0;
+  display:grid; grid-template-columns:minmax(0,1fr) 218px; gap:14px 22px; align-items:stretch;
+  box-shadow:var(--sh-1); transition:transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s var(--ease), opacity .45s var(--ease), filter .45s var(--ease) }
+.card:hover { transform:translateY(-2px); box-shadow:var(--sh-2); border-color:color-mix(in oklab, var(--accent) 30%, var(--line)) }
+.card.hidden { display:none }
+.body { min-width:0 }
+@container (max-width:620px) { .card { grid-template-columns:minmax(0,1fr) } }
+@media (max-width:720px) { .card { grid-template-columns:minmax(0,1fr) } }
+
+/* reveal on scroll, with a JS timeout fallback so nothing is parked hidden */
+.reveal .card, .reveal .stat { opacity:0; transform:translateY(12px); filter:blur(4px) }
+.reveal .card.in, .reveal .stat.in { opacity:1; transform:none; filter:none }
+.stat { transition:opacity .45s var(--ease), transform .45s var(--ease), filter .45s var(--ease) }
+
+.top { display:flex; justify-content:space-between; gap:8px; align-items:baseline }
+.title { font-size:17.5px; font-weight:640; line-height:1.32; letter-spacing:-.011em; text-decoration:none; color:var(--fg);
+  background-image:linear-gradient(var(--accent),var(--accent)); background-size:0 1.5px; background-position:0 100%;
+  background-repeat:no-repeat; transition:background-size .3s var(--ease), color .2s }
+.card:hover .title { color:var(--accent); background-size:100% 1.5px }
+.meta { color:var(--muted); font-size:13.5px; margin-top:5px; display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px }
+.meta .i { opacity:.55 }
+.row { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; font-size:12.5px }
+
+/* --- badges: one hierarchy ----------------------------------------------
+ * .tag        neutral, the default — facts that do not change the decision
+ * .tag.key    the single accent per card (what is new / what pays out)
+ * .tag.pos    a quiet positive (money, food, a match)
+ * .tag.neg    a real warning
+ * .tag.ghost  lowest tier — outline only, for long skill/topic lists
+ */
+.tag { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:var(--r-pill);
+  background:var(--chip); color:var(--muted); font-weight:500; line-height:1.5; border:1px solid transparent }
+.tag .i { opacity:.7 }
+.tag.key { background:var(--accent-soft); color:var(--accent-ink); font-weight:600 }
+.tag.key .i { opacity:1 }
+.tag.pos { background:transparent; border-color:color-mix(in oklab, var(--good) 35%, transparent); color:var(--good); font-weight:600 }
+.tag.neg { background:var(--bad-soft); color:var(--bad); font-weight:600 }
+.tag.ghost { background:transparent; border-color:var(--line); color:var(--faint); font-weight:450 }
+.tag.new { background:transparent; border-color:color-mix(in oklab, var(--accent) 40%, transparent); color:var(--accent-ink); font-weight:600 }
+.tag.flag { background:var(--bad-soft); color:var(--bad); font-weight:600 }
+.reason { margin-top:11px; font-size:14.5px; line-height:1.55 }
+
+/* score panel */
+.chart { position:relative; border-left:1px solid var(--line-soft); padding-left:18px; font-size:12.5px }
+.body { align-content:start }
+@container (max-width:620px) { .chart { border-left:0; border-top:1px solid var(--line-soft); padding:12px 0 0 } }
+@media (max-width:720px) { .chart { border-left:0; border-top:1px solid var(--line-soft); padding:12px 0 0 } }
+.chart .total { font-size:27px; font-weight:680; font-variant-numeric:tabular-nums; line-height:1.1; letter-spacing:-.03em }
+.chart .total small { font-size:12px; font-weight:450; color:var(--faint); letter-spacing:0 }
+.chart .row2 { display:grid; grid-template-columns:64px 1fr 42px; gap:8px; align-items:center; margin-top:7px }
+.chart .lbl { color:var(--faint); font-size:11.5px; text-transform:capitalize }
+.chart .bar { height:6px; background:var(--chip); border-radius:var(--r-pill); overflow:hidden }
+.chart .bar i { display:block; height:100%; border-radius:var(--r-pill); background:var(--accent); opacity:.55;
+  transform-origin:left; transition:opacity .3s var(--ease) }
+.card:hover .chart .bar i { opacity:1 }
+.chart .val { text-align:right; font-variant-numeric:tabular-nums; font-size:11.5px; color:var(--faint) }
+.chart .pen { color:var(--bad) }
+.chart .note { color:var(--faint); font-size:11.5px; line-height:1.45; margin-top:10px }
+
+/* action row */
+.fb { display:flex; flex-wrap:wrap; gap:6px; margin-top:14px }
+.fb button, .fb a.btn { display:inline-flex; align-items:center; gap:6px; font:inherit; font-size:13px; font-weight:500;
+  border:1px solid var(--line); background:var(--panel-2); color:var(--muted); border-radius:var(--r-sm); padding:6px 11px;
+  cursor:pointer; text-decoration:none; transition:color .15s, border-color .15s, background .15s, transform .15s }
+.fb button:hover, .fb a.btn:hover { border-color:var(--accent); color:var(--accent) }
+.fb button:active { transform:scale(.97) }
+.fb button.on { background:var(--accent); color:var(--on-accent); border-color:var(--accent) }
+.card.done { opacity:.45; box-shadow:none; background:transparent }
+.card.done:hover { opacity:.9; transform:none }
+.card.done::before { display:none }
+.card.done .title { color:var(--muted) }
+.card.done .chart, .card.done .row, .card.done .reason { display:none }
+
+/* --- disclosures & drafter ---------------------------------------------- */
+details { margin:22px 0 0; background:var(--panel); border:1px solid var(--line); border-radius:var(--r-lg); padding:14px 18px; box-shadow:var(--sh-1) }
+summary { cursor:pointer; font-weight:600; font-size:14.5px }
+details ul { margin:8px 0 0 18px; font-size:13.5px; color:var(--muted) } details a { color:var(--accent) }
+textarea { width:100%; min-height:88px; margin-top:10px; font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:var(--r-sm); padding:10px; resize:vertical }
+.empty { color:var(--muted); padding:56px 0; text-align:center; grid-column:1/-1 }
+
+/* --- side drawer -------------------------------------------------------- */
+.side-btn { position:fixed; right:20px; bottom:20px; z-index:20; display:inline-flex; align-items:center; gap:7px;
+  font:inherit; font-size:13.5px; font-weight:600; padding:11px 18px; border:0; border-radius:var(--r-pill);
+  background:var(--accent); color:var(--on-accent); cursor:pointer; box-shadow:var(--sh-2); transition:transform .2s var(--ease), background .2s }
+.side-btn:hover { background:var(--accent-2); transform:translateY(-2px) }
+#side { position:fixed; top:0; right:0; height:100vh; width:min(440px,94vw); background:var(--panel);
+  border-left:1px solid var(--line); box-shadow:var(--sh-3); transform:translateX(105%);
+  transition:transform .34s var(--ease); z-index:30; overflow:auto; padding:20px 22px 40px }
+#side.open { transform:none }
+#side h2 { font-size:17px; font-weight:650; margin:0 0 4px; letter-spacing:-.015em }
+#side .close { float:right; font:inherit; border:0; background:transparent; color:var(--muted); font-size:22px; line-height:1; cursor:pointer }
+.trk { border:1px solid var(--line); border-radius:var(--r-md); padding:12px 14px; margin:12px 0; background:var(--panel-2);
+  transition:border-color .2s var(--ease) }
+.trk:hover { border-color:color-mix(in oklab, var(--accent) 30%, var(--line)) }
+.trk a { color:var(--fg); font-weight:600; text-decoration:none } .trk a:hover { color:var(--accent) }
+.trk .m { color:var(--muted); font-size:12.5px; margin-top:3px }
+.trk select { margin-top:8px; font-size:12.5px; background:var(--bg) }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration:.01ms !important; animation-duration:.01ms !important }
+  .card:hover { transform:none }
+  .reveal .card, .reveal .stat { opacity:1; transform:none; filter:none }
+}
+
+/* --- job-radar specifics ------------------------------------------------ */
+.chart .bar.semantic i { background:var(--good) }
+.tag.match { color:var(--good); font-weight:600 }
+.tag.stretch { color:var(--muted) }
+.tag.over { background:var(--bad-soft); color:var(--bad); font-weight:600 }
+.tag.salary { background:transparent; border-color:color-mix(in oklab, var(--good) 35%, transparent); color:var(--good); font-weight:600 }
+.tag.referral { background:transparent; border-color:var(--line); color:var(--muted); font-weight:500 }
+.tag.h1b { cursor:help }
+.tag.h1b-strong { color:var(--good); font-weight:600 }
+.tag.h1b-moderate { color:var(--muted) }
+.tag.h1b-weak, .tag.h1b-none, .tag.h1b-staffing-shop { color:var(--bad); font-weight:600 }
+.ref { display:flex; align-items:flex-start; gap:7px; font-size:13px; margin-top:10px; color:var(--muted) }
+.ref .i { margin-top:3px; opacity:.6 } .ref a { color:var(--accent); font-weight:500 }
+.refbtn.on { background:var(--accent); color:var(--on-accent); border-color:var(--accent) }
+.stagechip { display:inline-block; font-size:11.5px; padding:2px 9px; border-radius:var(--r-pill); background:var(--chip); margin-left:6px }
+.trk.closed a { color:var(--muted) } .trk .closed { color:var(--bad) }
+.trk .due { font-size:12.5px; margin-top:8px; color:var(--muted) }
+.trk .due.overdue { color:var(--bad); font-weight:600 } .trk .due.cold { color:var(--faint) }
+.trk .due button { font:inherit; font-size:11.5px; margin-left:6px; padding:3px 9px; border-radius:var(--r-pill);
+  border:1px solid var(--line); background:var(--bg); color:var(--muted); cursor:pointer }
+.trk .due button.on { background:var(--good); color:var(--on-accent); border-color:var(--good) }
+
+/* --- role-fit feedback -------------------------------------------------- */
+dialog { width:min(520px,calc(100vw - 32px)); border:1px solid var(--line); border-radius:var(--r-lg); background:var(--panel); color:var(--fg); box-shadow:var(--sh-3); padding:22px }
+dialog::backdrop { background:oklch(0.16 0.03 262 / .35) }
+dialog h2 { margin:0; font-size:18px; letter-spacing:-.015em }
+dialog p { margin:6px 0 14px; color:var(--muted); font-size:13.5px }
+.fit-reasons { display:grid; gap:8px }
+.fit-reasons label { display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:var(--r-sm); padding:8px 10px; cursor:pointer; font-size:13.5px }
+.fit-reasons label:has(input:checked) { border-color:var(--accent); background:var(--accent-soft) }
+.fit-other { display:none; margin-top:10px; min-height:70px }
+.fit-other.show { display:block }
+.dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:14px }
+.dialog-actions button { font:inherit; font-size:13px; padding:7px 12px; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--panel-2); color:var(--fg); cursor:pointer }
+.dialog-actions .primary { background:var(--accent); border-color:var(--accent); color:var(--on-accent) }
+</style>
+</head>
+<body>
+<svg class="sprite" aria-hidden="true" width="0" height="0" style="position:absolute" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /> <path d="M20 2v4" /> <path d="M22 4h-4" /> <circle cx="4" cy="20" r="2" /></symbol><symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /> <circle cx="12" cy="10" r="3" /></symbol><symbol id="i-building-2" viewBox="0 0 24 24"><path d="M10 12h4" /> <path d="M10 8h4" /> <path d="M14 21v-3a2 2 0 0 0-4 0v3" /> <path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2" /> <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16" /></symbol><symbol id="i-banknote" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2" /> <circle cx="12" cy="12" r="2" /> <path d="M6 12h.01M18 12h.01" /></symbol><symbol id="i-briefcase-business" viewBox="0 0 24 24"><path d="M12 12h.01" /> <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /> <path d="M22 13a18.15 18.15 0 0 1-20 0" /> <rect width="20" height="14" x="2" y="6" rx="2" /></symbol><symbol id="i-handshake" viewBox="0 0 24 24"><path d="m11 17 2 2a1 1 0 1 0 3-3" /> <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4" /> <path d="m21 3 1 11h-2" /> <path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3" /> <path d="M3 4h8" /></symbol><symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3" /> <path d="M8.12 8.12 12 12" /> <path d="M20 4 8.12 15.88" /> <circle cx="6" cy="18" r="3" /> <path d="M14.8 14.8 20 20" /></symbol><symbol id="i-thumbs-up" viewBox="0 0 24 24"><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" /> <path d="M7 10v12" /></symbol><symbol id="i-thumbs-down" viewBox="0 0 24 24"><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" /> <path d="M17 14V2" /></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></symbol><symbol id="i-triangle-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></symbol><symbol id="i-stamp" viewBox="0 0 24 24"><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13" /> <path d="M20 15.5a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1z" /> <path d="M5 22h14" /></symbol><symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /> <path d="M16 3.128a4 4 0 0 1 0 7.744" /> <path d="M22 21v-2a4 4 0 0 0-3-3.87" /> <circle cx="9" cy="7" r="4" /></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="M12 6v6l4 2" /></symbol></svg>
+<main>
+<header class="masthead">
+<h1>Job Radar AI <span class="dot">·</span> {{ date }}</h1>
+<div class="sub">generated {{ generated_at }} · your experience ≈ {{ effective_yoe }} yrs</div>
+<div class="stats">
+  <div class="stat accent"><b>{{ counts.visible }}</b><span>open</span></div>
+  <div class="stat good"><b>{{ counts.new }}</b><span>new today</span></div>
+  <div class="stat"><b>{{ counts.reviewed }}</b><span>reviewed</span></div>
+  <div class="stat"><b>{{ counts.applied }}</b><span>applied</span></div>
+  <div class="stat"><b>{{ counts.excluded }}</b><span>excluded</span></div>
+  <div class="stat"><b>{{ counts.hidden }}</b><span>hidden</span></div>
+</div>
+<div class="strip">
+{% for s in sources %}<span class="src{% if not s.ok %} bad{% endif %}">{{ s.company }}: {% if s.ok %}{{ s.count }} jobs{% else %}failed · {{ s.error[:80] }}{% endif %}</span>{% endfor %}
+</div>
+{% for w in warnings %}<div class="warn">{{ icon("triangle-alert") }}<span>{{ w }}</span></div>{% endfor %}
+</header>
+
+<div class="filters" id="filters">
+  <button class="chip on" data-filter="new" data-value="all">All</button>
+  <button class="chip" data-filter="new" data-value="new">New today</button>
+  <span class="sub">·</span>
+  {% for m in metros %}<button class="chip" data-filter="metro" data-value="{{ m }}">{{ m|metro }}</button>{% endfor %}
+  <span class="sub">·</span>
+  {% for a in ["remote","hybrid","onsite"] %}<button class="chip" data-filter="arr" data-value="{{ a }}">{{ a|arrangement }}</button>{% endfor %}
+  <span class="sub">·</span>
+  <select id="company"><option value="">All companies</option>{% for name, n in companies %}<option value="{{ name }}">{{ name }} ({{ n }})</option>{% endfor %}</select>
+  <select id="sort"><option value="rank">Sort: rank</option><option value="new">Sort: newest</option><option value="company">Sort: company</option></select>
+  <select id="minskills"><option value="0">Any skills score</option><option value="20">Skills ≥ 20</option><option value="30">Skills ≥ 30</option></select>
+</div>
+
+<section id="cards">
+{% for c in cards %}
+<article class="card{% if c.verdict in ('applied','bad','ignore') %} done{% endif %}{% if c.verdict == 'applied' %} applied{% endif %}" data-id="{{ c.id }}" data-verdict="{{ c.verdict }}" data-company="{{ c.company_key }}" data-company-name="{{ c.company }}" data-metro="{{ c.metro }}" data-arr="{{ c.arrangement }}" data-new="{{ 1 if c.status == 'new' else 0 }}" data-skills="{{ c.skills_points }}" data-rank="{{ c.rank }}" data-seen="{{ c.first_seen or '' }}">
+  <div class="body">
+  <div class="top">
+    <a class="title" href="{{ c.url }}" target="_blank" rel="noopener">{{ c.title }}</a>
+  </div>
+  <div class="meta"><span>{{ icon("building-2") }} {{ c.company }}</span><span>{{ icon("map-pin") }} {{ c.locations|join(" / ") }}{% if c.more_locations %} +{{ c.more_locations }}{% endif %} · {{ c.metro|metro }}</span>{% if c.first_seen %}<span>{{ icon("clock") }} seen {{ c.first_seen }}</span>{% endif %}</div>
+  <div class="row">
+    {% if c.status == 'new' %}<span class="tag new">{{ icon("sparkles") }}new</span>{% endif %}
+    <span class="tag">{{ c.arrangement|arrangement }}</span>
+    <span class="tag {{ c.yoe_label }}">{% if c.yoe_min is not none %}{{ c.yoe_min }}+ yrs required · {{ c.yoe_label }}{% else %}years not stated{% endif %}</span>
+    {% if c.yoe_pref %}<span class="tag stretch">preferred {{ c.yoe_pref }}+ yrs</span>{% endif %}
+    {% if c.salary %}<span class="tag salary">{{ icon("banknote") }}{{ c.salary }}</span>{% endif %}
+    {% if c.h1b_tier and c.h1b_tier != 'unknown' %}<span class="tag h1b h1b-{{ c.h1b_tier }}" title="{{ c.h1b_note }}">{{ icon("stamp") }}H-1B {{ c.h1b_tier }}</span>{% endif %}
+    {% if c.level != 'unknown' %}<span class="tag">{{ c.level }}</span>{% endif %}
+    {% for f in c.flags %}<span class="tag flag"{% if f == 'repost' and c.repost_note %} title="{{ c.repost_note }}"{% endif %}>{{ icon("triangle-alert") }}{{ f }}</span>{% endfor %}
+    <span class="tag referral" data-server="{{ 1 if c.company_referral else 0 }}"{% if not c.company_referral %} hidden{% endif %} title="A referral is pending or found at {{ c.company }}">{{ icon("handshake") }}referral in progress</span>
+    {% for s in c.skills %}<span class="tag ghost">{{ s }}</span>{% endfor %}
+  </div>
+  {% if c.reason %}<div class="reason">{{ c.reason }}{% if c.gaps %} <span class="sub">· gaps: {{ c.gaps|join(", ") }}</span>{% endif %}</div>{% endif %}
+  {% if c.connections %}<div class="ref">{{ icon("users") }}<span>You know {{ c.connection_count }} {{ 'person' if c.connection_count == 1 else 'people' }} at {{ c.company }}: {% for k in c.connections %}{% if k.linkedin %}<a href="{{ k.linkedin }}" target="_blank" rel="noopener">{{ k.name }}</a>{% else %}{{ k.name }}{% endif %}{% if k.title %} <span class="sub">{{ k.title }}</span>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}{% if c.more_connections %} <span class="sub">+{{ c.more_connections }} more</span>{% endif %} <span class="sub">· <a href="{{ c.second_degree_url }}" target="_blank" rel="noopener">2nd-degree</a> · ask for a referral before applying</span></span></div>
+  {% elif c.referral_url %}<div class="ref">{{ icon("handshake") }}<a href="{{ c.referral_url }}" target="_blank" rel="noopener">Find 1st-degree connections at {{ c.company }}</a> <span class="sub">· ask for a referral before applying</span></div>{% endif %}
+  <div class="fb">
+    <button data-verdict="good">{{ icon("thumbs-up") }}good</button><button data-verdict="bad" title="I like the company or role, but this posting is not a fit right now">{{ icon("thumbs-down") }}not a fit yet</button><button data-role-ignore="1" title="Hide only this posting; future roles at the company can still appear">{{ icon("x") }}not interested</button><button data-verdict="applied">{{ icon("check") }}applied</button><button data-company-ignore="1" title="Stop showing future roles from this company">{{ icon("x") }}ignore company</button>
+    <button data-verdict="tailor" class="tailor" title="Queue a tailored resume for this job">{{ icon("scissors") }}tailor resume</button>
+    <button class="refbtn{% if c.referral_on %} on{% endif %}" data-server="{{ 1 if c.referral_on else 0 }}" title="Record a pending or found referral for this company">{{ icon("handshake") }}referral</button>
+  </div>
+  </div>
+  <aside class="chart" aria-label="score breakdown">
+    <div class="total">{{ c.score }} <small>/ 100</small></div>
+    {% for p in c.chart %}<div class="row2"><span class="lbl">{{ p.name }}</span><span class="bar{% if p.semantic %} semantic{% endif %}"><i style="width:{{ p.pct }}%"></i></span><span class="val">{{ p.value }}/{{ p.max }}</span></div>{% endfor %}
+    {% if c.penalty %}<div class="row2"><span class="lbl pen">penalties</span><span></span><span class="val pen">−{{ c.penalty }}</span></div>{% endif %}
+    <div class="note">{% if c.reviewed %}skills = semantic review of the posting against your experience{% else %}skills = keyword match (not reviewed yet){% endif %}</div>
+  </aside>
+</article>
+{% else %}
+<div class="empty">No open jobs passed the filters today.</div>
+{% endfor %}
+</section>
+
+<dialog id="fit-dialog" aria-labelledby="fit-title">
+  <form method="dialog" id="fit-form">
+    <h2 id="fit-title">Why isn’t this role a fit yet?</h2>
+    <p id="fit-job"></p>
+    <div class="fit-reasons">
+      <label><input type="radio" name="fit-reason" value="years of experience too high" checked> Years of experience are too high</label>
+      <label><input type="radio" name="fit-reason" value="role feels too technical right now"> The role feels too technical right now</label>
+      <label><input type="radio" name="fit-reason" value="application process is too difficult"> The application process is too difficult</label>
+      <label><input type="radio" name="fit-reason" value="other"> Other</label>
+    </div>
+    <textarea id="fit-other" class="fit-other" placeholder="What made this role not a fit?"></textarea>
+    <div class="dialog-actions"><button value="cancel">Cancel</button><button class="primary" value="save">Save feedback</button></div>
+  </form>
+</dialog>
+
+<details><summary>Excluded ({{ counts.excluded }})</summary>
+{% for reason, items in excluded_groups %}
+<div class="sub" style="margin-top:8px">{{ reason }} ({{ items|length }})</div>
+<ul>{% for i in items %}<li><a href="{{ i.url }}" target="_blank" rel="noopener">{{ i.title }}</a> · {{ i.company }}</li>{% endfor %}</ul>
+{% endfor %}
+</details>
+
+<details open><summary>Feedback draft</summary>
+{% if write %}<p class="sub">Click the buttons on cards, then <b>Send to repo</b>: the lines are committed to <code>data/feedback.jsonl</code> on <code>{{ write.repo }}</code> (or copy and paste them to your agent / <code>uv run jobradar feedback import -</code>).</p>{% else %}<p class="sub">Click the buttons on cards, then copy this and paste it to your agent (or run <code>uv run jobradar feedback import -</code>).</p>{% endif %}
+<textarea id="feedback" placeholder="bad google:123 too senior"></textarea>
+<div class="fb">{% if write %}<button id="send" title="Commit these lines to data/feedback.jsonl through the GitHub API">Send to repo</button>{% endif %}<button id="copy">Copy</button><button id="clear">Clear</button>{% if write %} <span class="sub" id="sendmsg"></span>{% endif %}</div>
+{% if write %}<details class="tokenbox"><summary>GitHub token <span id="token-state"></span></summary>
+<p class="sub">A fine-grained personal access token with <b>Contents: read and write</b> on <code>{{ write.repo }}</code>, kept in this browser only. The study hub's token is the same one.</p>
+<input type="password" id="token" autocomplete="off" placeholder="github_pat_…" aria-label="GitHub token"> <button id="token-save">Save</button> <button id="token-forget">Forget</button> <span class="sub" id="token-msg"></span>
+</details>{% endif %}
+</details>
+</main>
+<button class="side-btn" id="sidebtn">{{ icon("check") }}Applied ({{ archive|length }})</button>
+<aside id="side" aria-label="applied archive">
+  <button class="close" id="sideclose" aria-label="close">×</button>
+  <h2>Applied archive</h2>
+  <div class="sub">Every job you marked applied, across days. Change the stage here; it lands in the feedback box below.</div>
+  {% for a in archive %}
+  <div class="trk{% if a.status == 'closed' %} closed{% endif %}" data-id="{{ a.id }}">
+    <a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.title }}</a>
+    <div class="m">{{ a.company }}{% if a.applied_on %} · applied {{ a.applied_on }}{% endif %}{% if a.status == 'closed' %} · posting closed{% elif a.live == 'expired' %} · <span class="closed">posting closed (checked {{ a.live_checked }})</span>{% elif a.live == 'active' %} · still open{% endif %}{% if a.note %} · {{ a.note }}{% endif %}</div>
+    <select class="stage" data-id="{{ a.id }}">
+      {% for st in ["applied","oa","phone","onsite","offer","rejected","withdrawn"] %}<option value="{{ st }}"{% if st == a.stage %} selected{% endif %}>{{ {"applied":"Applied","oa":"Online assessment","phone":"Phone screen","onsite":"Onsite / loop","offer":"Offer","rejected":"Rejected","withdrawn":"Withdrawn"}[st] }}</option>{% endfor %}
+    </select>
+    {% if a.resume_path %}<a class="sub" href="{{ a.resume_path }}" target="_blank" rel="noopener">resume {{ a.resume }}</a>{% endif %}
+    {% if a.followup and a.followup.urgency in ('overdue', 'waiting', 'cold') %}<div class="due {{ a.followup.urgency }}" title="{{ a.followup.why }}">{% if a.followup.urgency == 'overdue' %}{{ icon("clock") }} follow-up overdue since {{ a.followup.next_due }}{% elif a.followup.urgency == 'waiting' %}{{ icon("clock") }} follow up on {{ a.followup.next_due }}{% else %}{{ icon("clock") }} {{ a.followup.touches }} follow-ups, no reply · resting{% endif %} <button class="touch" data-id="{{ a.id }}" title="Record that you followed up today; lands in the feedback box">followed up today</button></div>{% endif %}
+  </div>
+  {% else %}<p class="sub">Nothing yet. Mark a card as applied, then paste the feedback box to your agent.</p>{% endfor %}
+</aside>
+{% if write %}<script>
+{{ hubwrite_js|safe }}
+</script>{% endif %}
+<script>
+(function(){
+  var state = {new:"all", metro:null, arr:null, company:"", sort:"rank", minskills:0};
+  var cards = Array.prototype.slice.call(document.querySelectorAll("#cards .card"));
+  var section = document.getElementById("cards");
+  function apply(){
+    cards.forEach(function(c){
+      var ok = true;
+      if (state.new === "new" && c.dataset.new !== "1") ok = false;
+      if (state.metro && c.dataset.metro !== state.metro) ok = false;
+      if (state.arr && c.dataset.arr !== state.arr) ok = false;
+      if (state.company && c.dataset.companyName !== state.company) ok = false;
+      if (+c.dataset.skills < state.minskills) ok = false;
+      c.classList.toggle("hidden", !ok);
+    });
+    var sorted = cards.slice().sort(function(a,b){
+      if (state.sort === "new") return (b.dataset.seen > a.dataset.seen) ? 1 : (b.dataset.seen < a.dataset.seen ? -1 : (+b.dataset.rank) - (+a.dataset.rank));
+      if (state.sort === "company") return a.dataset.companyName.localeCompare(b.dataset.companyName) || (+b.dataset.rank) - (+a.dataset.rank);
+      return (+b.dataset.rank) - (+a.dataset.rank);
+    });
+    sorted.forEach(function(c){ section.appendChild(c); });
+  }
+  document.querySelectorAll("#filters .chip").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var f = btn.dataset.filter, v = btn.dataset.value;
+      if (f === "new") { state.new = v; document.querySelectorAll('[data-filter="new"]').forEach(function(b){ b.classList.toggle("on", b === btn); }); }
+      else { state[f] = (state[f] === v) ? null : v; document.querySelectorAll('[data-filter="' + f + '"]').forEach(function(b){ b.classList.toggle("on", state[f] === b.dataset.value); }); }
+      apply();
+    });
+  });
+  document.getElementById("company").addEventListener("change", function(e){ state.company = e.target.value; apply(); });
+  document.getElementById("sort").addEventListener("change", function(e){ state.sort = e.target.value; apply(); });
+  document.getElementById("minskills").addEventListener("change", function(e){ state.minskills = +e.target.value; apply(); });
+  var side = document.getElementById("side");
+  document.getElementById("sidebtn").addEventListener("click", function(){ side.classList.toggle("open"); });
+  document.getElementById("sideclose").addEventListener("click", function(){ side.classList.remove("open"); });
+  var ta = document.getElementById("feedback");
+  var drafts = {}, stages = {}, refs = {}, touches = {}, companyIgnores = {}, sent = {verdicts: {}, refs: {}, companyIgnores: {}};
+  try { drafts = JSON.parse(localStorage.getItem("jobradar.feedback") || "{}"); } catch (e) { drafts = {}; }
+  try { sent = JSON.parse(localStorage.getItem("jobradar.sent") || "") || sent; } catch (e) {}
+  if (!sent.verdicts) sent.verdicts = {}; if (!sent.refs) sent.refs = {};
+  try { stages = JSON.parse(localStorage.getItem("jobradar.stages") || "{}"); } catch (e) { stages = {}; }
+  try { refs = JSON.parse(localStorage.getItem("jobradar.referrals") || "{}"); } catch (e) { refs = {}; }
+  try { touches = JSON.parse(localStorage.getItem("jobradar.followups") || "{}"); } catch (e) { touches = {}; }
+  try { companyIgnores = JSON.parse(localStorage.getItem("jobradar.companyIgnores") || "{}"); } catch (e) { companyIgnores = {}; }
+  document.querySelectorAll("#side button.touch").forEach(function(b){
+    b.addEventListener("click", function(){ if (touches[b.dataset.id]) delete touches[b.dataset.id]; else touches[b.dataset.id] = 1; renderDraft(); });
+  });
+  function refOn(c){ var b = c.querySelector(".refbtn"); var id = c.dataset.id; return (id in refs) ? !!refs[id] : (id in sent.refs) ? !!sent.refs[id] : b.dataset.server === "1"; }
+  document.querySelectorAll("#side select.stage").forEach(function(sel){
+    if (stages[sel.dataset.id]) sel.value = stages[sel.dataset.id];
+    sel.addEventListener("change", function(){ stages[sel.dataset.id] = sel.value; renderDraft(); });
+  });
+  function renderDraft(){
+    var lines = Object.keys(drafts).map(function(id){ var d = drafts[id]; return d.verdict + " " + id + (d.note ? " " + d.note : ""); });
+    Object.keys(companyIgnores).forEach(function(key){ lines.push(JSON.stringify({kind:"company_ignore", company_key:key, note:companyIgnores[key]})); });
+    Object.keys(stages).forEach(function(id){ lines.push("stage " + id + " " + stages[id]); });
+    Object.keys(refs).forEach(function(id){ lines.push(refs[id] ? "referral " + id : "referral " + id + " none"); });
+    Object.keys(touches).forEach(function(id){ lines.push("followup " + id); });
+    ta.value = lines.join("\n");
+    try { localStorage.setItem("jobradar.stages", JSON.stringify(stages)); } catch (e) {}
+    try { localStorage.setItem("jobradar.referrals", JSON.stringify(refs)); } catch (e) {}
+    try { localStorage.setItem("jobradar.followups", JSON.stringify(touches)); } catch (e) {}
+    try { localStorage.setItem("jobradar.companyIgnores", JSON.stringify(companyIgnores)); } catch (e) {}
+    document.querySelectorAll("#side button.touch").forEach(function(b){ b.classList.toggle("on", !!touches[b.dataset.id]); });
+    var refCompanies = {};
+    cards.forEach(function(c){ if (refOn(c)) refCompanies[c.dataset.company] = true; });
+    cards.forEach(function(c){
+      c.querySelector(".refbtn").classList.toggle("on", refOn(c));
+      var chip = c.querySelector(".tag.referral");
+      if (chip) chip.hidden = !(refCompanies[c.dataset.company] || chip.dataset.server === "1");
+    });
+    cards.forEach(function(c){
+      var draft = drafts[c.dataset.id], v = (draft && draft.verdict) || sent.verdicts[c.dataset.id] || c.dataset.verdict || "";
+      var companyIgnored = c.dataset.company in companyIgnores || c.dataset.company in sent.companyIgnores;
+      // DOMTokenList.toggle treats an omitted force argument as a request to toggle.
+      // Coerce this optional draft lookup so untouched cards always start unselected.
+      var roleIgnored = !!(draft && draft.verdict === "bad" && draft.note === "not interested in this posting");
+      c.querySelectorAll(".fb button").forEach(function(b){ b.classList.toggle("on", v === b.dataset.verdict); });
+      var roleIgnoreButton = c.querySelector("[data-role-ignore]"); if (roleIgnoreButton) roleIgnoreButton.classList.toggle("on", roleIgnored);
+      var ignoreButton = c.querySelector("[data-company-ignore]"); if (ignoreButton) ignoreButton.classList.toggle("on", companyIgnored);
+      var done = (v === "applied" || v === "bad" || companyIgnored);
+      c.classList.toggle("done", done); c.classList.toggle("applied", v === "applied");
+    });
+    try { localStorage.setItem("jobradar.feedback", JSON.stringify(drafts)); } catch (e) {}
+  }
+  cards.forEach(function(c){
+    c.querySelectorAll(".fb button[data-verdict]").forEach(function(b){
+      b.addEventListener("click", function(){
+        if (b.dataset.verdict === "bad") { openFitDialog(c); return; }
+        if (drafts[c.dataset.id] && drafts[c.dataset.id].verdict === b.dataset.verdict) delete drafts[c.dataset.id]; else drafts[c.dataset.id] = {verdict:b.dataset.verdict, note:""};
+        renderDraft();
+      });
+    });
+    c.querySelector("[data-company-ignore]").addEventListener("click", function(){
+      var key = c.dataset.company;
+      if (key in companyIgnores) delete companyIgnores[key]; else companyIgnores[key] = "not interested in this company";
+      renderDraft();
+    });
+    c.querySelector("[data-role-ignore]").addEventListener("click", function(){
+      var current = drafts[c.dataset.id];
+      if (current && current.verdict === "bad" && current.note === "not interested in this posting") delete drafts[c.dataset.id];
+      else drafts[c.dataset.id] = {verdict:"bad", note:"not interested in this posting"};
+      renderDraft();
+    });
+  });
+  cards.forEach(function(c){
+    c.querySelector(".refbtn").addEventListener("click", function(){ refs[c.dataset.id] = !refOn(c); renderDraft(); });
+  });
+  document.getElementById("copy").addEventListener("click", function(){ ta.select(); try { navigator.clipboard.writeText(ta.value); } catch (e) { document.execCommand("copy"); } });
+  document.getElementById("clear").addEventListener("click", function(){ drafts = {}; stages = {}; refs = {}; touches = {}; companyIgnores = {}; renderDraft(); });
+
+  var fitDialog = document.getElementById("fit-dialog"), fitCard = null;
+  function openFitDialog(card){ fitCard = card; document.getElementById("fit-job").textContent = card.dataset.companyName + " · " + card.querySelector(".title").textContent; document.getElementById("fit-other").value = ""; fitDialog.showModal(); }
+  document.querySelectorAll('input[name="fit-reason"]').forEach(function(input){ input.addEventListener("change", function(){ document.getElementById("fit-other").classList.toggle("show", input.value === "other" && input.checked); }); });
+  document.getElementById("fit-form").addEventListener("submit", function(event){
+    if (!fitCard || event.submitter.value === "cancel") return;
+    var choice = document.querySelector('input[name="fit-reason"]:checked').value;
+    var note = choice === "other" ? document.getElementById("fit-other").value.trim() : choice;
+    if (!note) return;
+    drafts[fitCard.dataset.id] = {verdict:"bad", note:note}; renderDraft();
+  });
+
+  /* Send to repo: the draft lines become data/feedback.jsonl records (the same shapes `jobradar feedback import`
+   * writes) and are appended in one commit through the GitHub Contents API, with the token the study hub keeps
+   * under the same key. What was sent stays visible on the cards until the next scan renders it from the repo. */
+  var WRITE = {{ write|tojson if write else 'null' }};
+  var VERDICTS = ["good", "bad", "applied", "ignore"], STAGES = ["applied", "oa", "phone", "onsite", "offer", "rejected", "withdrawn"];
+  var TOKEN_KEY = "hub.token";
+  function getToken(){ try { return localStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; } }
+  function tokenState(){ var st = document.getElementById("token-state"); if (st) st.textContent = getToken() ? "· set" : "· not set"; }
+  function toRecord(line, ts){
+    line = line.trim(); if (!line) return null;
+    if (line[0] === "{") { var o = JSON.parse(line); if (!o.ts) o.ts = ts; return o; }
+    var parts = line.split(/\s+/), head = parts[0].toLowerCase(), id = parts[1], rest = parts.slice(2).join(" ");
+    if (!id) throw new Error("cannot parse: " + line);
+    if (head === "referral") return {ts: ts, job_id: id, kind: "referral", state: /^(none|off)$/i.test(rest.trim()) ? "off" : "on"};
+    if (head === "tailor") return {ts: ts, job_id: id, kind: "tailor"};
+    if (head === "followup") { var f = {ts: ts, job_id: id, kind: "followup"}; if (rest) f.note = rest; return f; }
+    if (head === "stage") {
+      var sp = rest.split(/\s+/), stage = (sp[0] || "").toLowerCase(), note = sp.slice(1).join(" ");
+      if (STAGES.indexOf(stage) < 0) throw new Error("unknown stage " + stage);
+      var rec = {ts: ts, job_id: id, verdict: "applied", note: note, stage: stage};
+      var m = note.match(/^resume=([0-9a-f]{8})\b\s*/); if (m) { rec.resume = m[1]; rec.note = note.slice(m[0].length); }
+      return rec;
+    }
+    if (VERDICTS.indexOf(head) < 0) throw new Error("unknown verdict " + head);
+    return {ts: ts, job_id: id, verdict: head, note: rest};
+  }
+  var sendBtn = document.getElementById("send"), sendMsg = document.getElementById("sendmsg");
+  if (WRITE && sendBtn && typeof HubWriter !== "undefined") {
+    tokenState();
+    document.getElementById("token-save").addEventListener("click", function(){
+      var t = document.getElementById("token").value.trim(); var msg = document.getElementById("token-msg");
+      if (!t) { msg.textContent = "paste a token first"; return; }
+      try { localStorage.setItem(TOKEN_KEY, t); } catch (e) {}
+      document.getElementById("token").value = ""; msg.textContent = "saved in this browser"; tokenState();
+    });
+    document.getElementById("token-forget").addEventListener("click", function(){ try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} document.getElementById("token-msg").textContent = "forgotten"; tokenState(); });
+    sendBtn.addEventListener("click", function(){
+      var token = getToken();
+      if (!token) { sendMsg.textContent = "add a GitHub token below first"; return; }
+      var w = new HubWriter({repo: WRITE.repo, branch: WRITE.branch || "main", api: WRITE.api, token: token});
+      var ts = w.now(), lines, recs;
+      try {
+        lines = ta.value.split("\n").map(function(l){ return l.trim(); }).filter(Boolean);
+        recs = lines.map(function(l){ return toRecord(l, ts); }).filter(Boolean);
+      } catch (e) { sendMsg.textContent = String(e.message || e); return; }
+      if (!recs.length) { sendMsg.textContent = "nothing to send"; return; }
+      var body = recs.map(function(r){ return JSON.stringify(r); }).join("\n");
+      sendBtn.disabled = true; sendMsg.textContent = "committing " + recs.length + " line(s)…";
+      w.modify("data/feedback.jsonl", function(text){ return text + (text && !text.endsWith("\n") ? "\n" : "") + body + "\n"; },
+               "feedback: {{ date }} " + recs.length + " line(s) from the report").then(function(res){
+        Object.keys(drafts).forEach(function(id){ sent.verdicts[id] = drafts[id].verdict; });
+        Object.keys(companyIgnores).forEach(function(key){ sent.companyIgnores[key] = true; });
+        Object.keys(refs).forEach(function(id){ sent.refs[id] = refs[id]; });
+        Object.keys(stages).forEach(function(id){ sent.verdicts[id] = "applied"; });
+        try { localStorage.setItem("jobradar.sent", JSON.stringify(sent)); } catch (e) {}
+        drafts = {}; stages = {}; refs = {}; touches = {}; companyIgnores = {}; renderDraft();
+        sendMsg.textContent = "committed " + recs.length + " line(s)" + (res && res.commit ? " (" + String(res.commit).slice(0, 7) + ")" : "") + "; the next scan renders them";
+      }).catch(function(e){ sendMsg.textContent = "not sent: " + String(e.message || e); }).then(function(){ sendBtn.disabled = false; });
+    });
+  }
+  renderDraft();
+  apply();
+})();
+</script>
+<script>
+/* Motion, ported from the Example Project frontend as plain DOM code:
+ * a pointer-tracked highlight on cards, a scroll reveal with a timeout
+ * fallback, and counting KPI numbers. All of it no-ops under reduced motion. */
+(function(){
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) return;
+  var targets = Array.prototype.slice.call(document.querySelectorAll("#cards .card, .stat"));
+  document.body.classList.add("reveal");
+  var show = function(el){ el.classList.add("in"); };
+  if (!("IntersectionObserver" in window)) { targets.forEach(show); return; }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if (e.isIntersecting) { show(e.target); io.unobserve(e.target); } });
+  }, {rootMargin: "0px 0px -8% 0px"});
+  targets.forEach(function(el){ io.observe(el); });
+  setTimeout(function(){ targets.forEach(show); }, 700);          // nothing stays parked at opacity 0
+
+  document.querySelectorAll(".stat b").forEach(function(el){
+    var end = parseInt(el.textContent, 10);
+    if (!(end > 0)) return;
+    var t0 = null, dur = 620;
+    el.textContent = "0";
+    requestAnimationFrame(function step(t){
+      if (t0 === null) t0 = t;
+      var p = Math.min(1, (t - t0) / dur);
+      el.textContent = Math.round(end * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(step);
+    });
+  });
+})();
+</script>
+</body>
+</html>

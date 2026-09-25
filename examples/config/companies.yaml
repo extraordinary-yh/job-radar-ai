@@ -1,0 +1,66 @@
+companies:
+- name: Google
+  size: big
+  key: google
+  adapter: google
+  enabled: true
+  queries:
+  - software engineer
+  - machine learning engineer
+  - AI engineer
+  - product engineer
+  - forward deployed engineer
+  - solutions engineer
+  locations:
+  - New York, NY, USA
+  - San Francisco, CA, USA
+  - Mountain View, CA, USA
+  - Sunnyvale, CA, USA
+  max_pages: 3
+- name: Microsoft
+  size: big
+  key: microsoft
+  adapter: microsoft
+  enabled: true
+  queries:
+  - software engineer
+  - machine learning engineer
+  - AI engineer
+  - product engineer
+  - forward deployed engineer
+  - solutions engineer
+  locations:
+  - New York, United States
+  - San Francisco, California, United States
+  - Mountain View, California, United States
+  max_pages: 3
+- name: Bloomberg
+  size: big
+  key: bloomberg
+  adapter: bloomberg
+  enabled: true
+  queries:
+  - software engineer
+  - machine learning
+  - AI engineer
+  - product engineer
+  locations: []
+  max_pages: 8
+- name: Stripe
+  key: stripe
+  adapter: greenhouse
+  board: stripe
+  size: big
+  enabled: true
+- name: Anthropic
+  size: big
+  key: anthropic
+  adapter: greenhouse
+  board: anthropic
+  enabled: true
+- name: OpenAI
+  size: big
+  key: openai
+  adapter: ashby
+  board: openai
+  enabled: true

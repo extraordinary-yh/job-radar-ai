@@ -1,0 +1,32 @@
+{
+ "provider": "amazon",
+ "jobs": [
+  {
+   "title": "Software Dev Engineer, GuardDuty",
+   "url": "https://www.amazon.jobs/en/jobs/10530460/software-dev-engineer-guardduty",
+   "company": "Amazon Development Center U.S., Inc.",
+   "location": "New York, New York, USA",
+   "description": "",
+   "postedAt": 1788505200000,
+   "dedupKey": null
+  },
+  {
+   "title": "Software Development Engineer, Agent Platforms & Services",
+   "url": "https://www.amazon.jobs/en/jobs/10530139/software-development-engineer-agent-platforms-services",
+   "company": "Amazon.com Services LLC",
+   "location": "New York, New York, USA",
+   "description": "",
+   "postedAt": 1788505200000,
+   "dedupKey": null
+  },
+  {
+   "title": "Software Development Engineer, Agent Platforms & Services",
+   "url": "https://www.amazon.jobs/en/jobs/10530111/software-development-engineer-agent-platforms-services",
+   "company": "Amazon.com Services LLC",
+   "location": "Seattle, Washington, USA",
+   "description": "",
+   "postedAt": 1788505200000,
+   "dedupKey": null
+  }
+ ]
+}
