@@ -17,7 +17,8 @@
 - Collect jobs from public ATS boards and company career sites.
 - Inspect every ranking component: title, location, experience, skills, and recency.
 - Let your coding agent review fit against your evidence and explain gaps.
-- Keep feedback, application stages, and follow-up history in local files.
+- Save feedback and stage changes automatically from a local board, with retry recovery.
+- Pin selected jobs and preserve confirmed application dates and titles across scans.
 
 ## Try the fictional demo
 
@@ -47,6 +48,7 @@ Replace the fictional files in `profile/` with your own information. Customize t
 ```bash
 uv run jobradar run
 uv run jobradar status
+uv run jobradar serve
 ```
 
 The starter ranking targets software roles in the US. Change the location rules, experience caps, and skill weights for your own search. Scores explain configured preferences; they are not probabilities of getting hired. Public career sites change; a source failure is reported explicitly.

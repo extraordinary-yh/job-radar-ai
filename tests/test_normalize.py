@@ -18,6 +18,7 @@ def test_html_to_text_straightens_curly_quotes():
     (["United States, New York, New York"], "nyc"),
     (["Brooklyn, NY"], "nyc"),
     (["Mountain View, CA, USA"], "bay"),
+    (["Los Gatos,California,United States of America"], "bay"),
     (["San Francisco, CA, US"], "bay"),
     (["Remote - US"], "remote_us"),
     (["Remote"], "remote_us"),
@@ -74,6 +75,8 @@ def test_detect_arrangement_from_text_and_locations():
     ("6+ years building and operating production backend or infrastructure systems.", (6, None)),
     ("Our product is 12 years old and used by 3 million people", (None, None)),
     ("plus two (2) years of experience in Building and shipping ML systems in production", (2, None)),
+    ("We wrapped up our first two years of the journey. Our Ads Engineering team builds advertising systems.", (None, None)),
+    ("Our first two years of the journey. Minimum: 3+ years of software engineering experience.", (3, None)),
 ])
 def test_extract_yoe(text, expected):
     assert extract_yoe(text) == expected
@@ -100,6 +103,30 @@ def test_extract_yoe(text, expected):
 ])
 def test_level_from_title(title, expected):
     assert level_from_title(title) == expected
+
+
+@pytest.mark.parametrize("title,expected", [
+    ("Software Engineer 4 - Ads Engineering", "mid"),
+    ("Software Engineer 4/5 - Model Serving", "mid"),
+    ("Software Engineering 5 - Ads Agent", "senior"),
+    ("Software Engineer L5 - AI Observability", "senior"),
+    ("Software Engineer (L6) - Compute Runtime", "staff"),
+    ("Software Engineer 6 - Ads Identity", "staff"),
+    ("Software Engineer (L7) - Application Networking", "staff"),
+])
+def test_netflix_numeric_levels_are_company_specific(title, expected):
+    assert level_from_title(title, "Netflix") == expected
+    assert level_from_title(title, "Other Company") == "unknown"
+
+
+def test_netflix_level_survives_normalize_and_slim_snapshot_render():
+    from jobradar.models import Job
+    from jobradar.normalize import renormalize
+    raw = RawJob(company="netflix", source_id="6", title="Software Engineer (L6) - Compute Runtime", url="u")
+    assert normalize(raw, "Netflix").level == "staff"
+    slim = Job(id="netflix:6", company="Netflix", title=raw.title, url="u", excluded=True)
+    renormalize(slim)
+    assert slim.level == "staff"
 
 
 def test_detect_flags_sponsorship_variants():

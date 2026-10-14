@@ -66,6 +66,15 @@ def test_write_report_writes_dated_and_index(tmp_path):
     assert dated.read_text() == index.read_text() == "<html>x</html>"
 
 
+def test_pinned_matches_precede_higher_scores_and_static_report_points_to_saving_board():
+    html = render_report([job(1, score=99), job(2, score=70)], META, PREFS, "2026-10-02",
+                         pinned_jobs=["google:2"], local_board_url="http://127.0.0.1:8766/")
+    assert html.index('data-id="google:2"') < html.index('data-id="google:1"')
+    assert 'data-pinned="1"' in html and 'Pinned for you' in html
+    assert 'href="http://127.0.0.1:8766/"' in html and 'drafts only' in html
+    assert 'id="send"' not in html and 'id="token"' not in html
+
+
 def test_referral_toggle_chip_and_resume_link():
     a, b = job(1, company="Figma", id="figma:1"), job(2, company="Figma", id="figma:2")
     html = render_report([a, b], META, PREFS, "2026-09-02", referral_marks={"figma:1": True}, referral_companies={"Figma"},

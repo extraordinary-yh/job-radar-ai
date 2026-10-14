@@ -266,13 +266,14 @@ dialog p { margin:6px 0 14px; color:var(--muted); font-size:13.5px }
 
 <section id="cards">
 {% for c in cards %}
-<article class="card{% if c.verdict in ('applied','bad','ignore') %} done{% endif %}{% if c.verdict == 'applied' %} applied{% endif %}" data-id="{{ c.id }}" data-verdict="{{ c.verdict }}" data-company="{{ c.company_key }}" data-company-name="{{ c.company }}" data-metro="{{ c.metro }}" data-arr="{{ c.arrangement }}" data-new="{{ 1 if c.status == 'new' else 0 }}" data-skills="{{ c.skills_points }}" data-rank="{{ c.rank }}" data-seen="{{ c.first_seen or '' }}">
+<article class="card{% if c.verdict in ('applied','bad','ignore') %} done{% endif %}{% if c.verdict == 'applied' %} applied{% endif %}" data-id="{{ c.id }}" data-verdict="{{ c.verdict }}" data-company="{{ c.company_key }}" data-company-name="{{ c.company }}" data-metro="{{ c.metro }}" data-arr="{{ c.arrangement }}" data-new="{{ 1 if c.status == 'new' else 0 }}" data-skills="{{ c.skills_points }}" data-rank="{{ c.rank }}" data-pinned="{{ 1 if c.pinned else 0 }}" data-seen="{{ c.first_seen or '' }}">
   <div class="body">
   <div class="top">
     <a class="title" href="{{ c.url }}" target="_blank" rel="noopener">{{ c.title }}</a>
   </div>
   <div class="meta"><span>{{ icon("building-2") }} {{ c.company }}</span><span>{{ icon("map-pin") }} {{ c.locations|join(" / ") }}{% if c.more_locations %} +{{ c.more_locations }}{% endif %} · {{ c.metro|metro }}</span>{% if c.first_seen %}<span>{{ icon("clock") }} seen {{ c.first_seen }}</span>{% endif %}</div>
   <div class="row">
+    {% if c.pinned %}<span class="tag new">Pinned for you</span>{% endif %}
     {% if c.status == 'new' %}<span class="tag new">{{ icon("sparkles") }}new</span>{% endif %}
     <span class="tag">{{ c.arrangement|arrangement }}</span>
     <span class="tag {{ c.yoe_label }}">{% if c.yoe_min is not none %}{{ c.yoe_min }}+ yrs required · {{ c.yoe_label }}{% else %}years not stated{% endif %}</span>
@@ -327,10 +328,11 @@ dialog p { margin:6px 0 14px; color:var(--muted); font-size:13.5px }
 {% endfor %}
 </details>
 
-<details open><summary>Feedback draft</summary>
-{% if write %}<p class="sub">Click the buttons on cards, then <b>Send to repo</b>: the lines are committed to <code>data/feedback.jsonl</code> on <code>{{ write.repo }}</code> (or copy and paste them to your agent / <code>uv run jobradar feedback import -</code>).</p>{% else %}<p class="sub">Click the buttons on cards, then copy this and paste it to your agent (or run <code>uv run jobradar feedback import -</code>).</p>{% endif %}
+{% if local %}<div id="local-banner" style="position:fixed;bottom:20px;left:20px;max-width:calc(100vw - 230px);z-index:19;pointer-events:none;background:var(--bg,#fff);border:1px solid currentColor;border-radius:10px;padding:12px" role="status" aria-live="polite"><b>Local saving</b> · <span id="local-status">Selections save automatically on this computer</span></div>{% elif local_board_url %}<div id="saving-board-link" style="position:fixed;bottom:20px;left:20px;max-width:calc(100vw - 230px);z-index:19;background:var(--bg,#fff);border:1px solid currentColor;border-radius:10px;padding:12px"><a href="{{ local_board_url }}"><b>Open saving board on this computer</b></a><div class="sub">Applied and not-a-fit choices save automatically there. This report keeps drafts only.</div></div>{% endif %}
+<details open><summary>{% if local %}Saved selections and recovery{% else %}Feedback draft{% endif %}</summary>
+{% if local %}<p class="sub">Applied and other selections save automatically. Wait for “Saved on this computer” before closing. You can also paste feedback lines from an older report below and click Save / retry.</p>{% elif local_board_url %}<p class="sub"><a href="{{ local_board_url }}">Open the saving board on this computer</a> to remember applied and not-a-fit choices without a GitHub token. If you already have draft lines here, copy them into that board’s recovery box and click Save / retry. On another device, copy these lines to your agent for import.</p>{% elif write %}<p class="sub">Click the buttons on cards, then <b>Send to repo</b>: the lines are committed to <code>data/feedback.jsonl</code> on <code>{{ write.repo }}</code> (or copy and paste them to your agent / <code>uv run jobradar feedback import -</code>).</p>{% else %}<p class="sub">Click the buttons on cards, then copy this and paste it to your agent (or run <code>uv run jobradar feedback import -</code>).</p>{% endif %}
 <textarea id="feedback" placeholder="bad google:123 too senior"></textarea>
-<div class="fb">{% if write %}<button id="send" title="Commit these lines to data/feedback.jsonl through the GitHub API">Send to repo</button>{% endif %}<button id="copy">Copy</button><button id="clear">Clear</button>{% if write %} <span class="sub" id="sendmsg"></span>{% endif %}</div>
+<div class="fb">{% if local %}<button id="local-save">Save / retry</button>{% endif %}{% if write %}<button id="send" title="Commit these lines to data/feedback.jsonl through the GitHub API">Send to repo</button>{% endif %}<button id="copy">Copy</button><button id="clear">Clear</button>{% if write %} <span class="sub" id="sendmsg"></span>{% endif %}</div>
 {% if write %}<details class="tokenbox"><summary>GitHub token <span id="token-state"></span></summary>
 <p class="sub">A fine-grained personal access token with <b>Contents: read and write</b> on <code>{{ write.repo }}</code>, kept in this browser only. The study hub's token is the same one.</p>
 <input type="password" id="token" autocomplete="off" placeholder="github_pat_…" aria-label="GitHub token"> <button id="token-save">Save</button> <button id="token-forget">Forget</button> <span class="sub" id="token-msg"></span>
@@ -341,10 +343,10 @@ dialog p { margin:6px 0 14px; color:var(--muted); font-size:13.5px }
 <aside id="side" aria-label="applied archive">
   <button class="close" id="sideclose" aria-label="close">×</button>
   <h2>Applied archive</h2>
-  <div class="sub">Every job you marked applied, across days. Change the stage here; it lands in the feedback box below.</div>
+  <div class="sub">Every job you marked applied, across days. {% if local %}Stage changes save automatically on this computer.{% else %}Change the stage here; it lands in the feedback box below.{% endif %}</div>
   {% for a in archive %}
   <div class="trk{% if a.status == 'closed' %} closed{% endif %}" data-id="{{ a.id }}">
-    <a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.title }}</a>
+    {% if a.url %}<a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.title }}</a>{% else %}<span>{{ a.title }}</span>{% endif %}
     <div class="m">{{ a.company }}{% if a.applied_on %} · applied {{ a.applied_on }}{% endif %}{% if a.status == 'closed' %} · posting closed{% elif a.live == 'expired' %} · <span class="closed">posting closed (checked {{ a.live_checked }})</span>{% elif a.live == 'active' %} · still open{% endif %}{% if a.note %} · {{ a.note }}{% endif %}</div>
     <select class="stage" data-id="{{ a.id }}">
       {% for st in ["applied","oa","phone","onsite","offer","rejected","withdrawn"] %}<option value="{{ st }}"{% if st == a.stage %} selected{% endif %}>{{ {"applied":"Applied","oa":"Online assessment","phone":"Phone screen","onsite":"Onsite / loop","offer":"Offer","rejected":"Rejected","withdrawn":"Withdrawn"}[st] }}</option>{% endfor %}
@@ -352,7 +354,7 @@ dialog p { margin:6px 0 14px; color:var(--muted); font-size:13.5px }
     {% if a.resume_path %}<a class="sub" href="{{ a.resume_path }}" target="_blank" rel="noopener">resume {{ a.resume }}</a>{% endif %}
     {% if a.followup and a.followup.urgency in ('overdue', 'waiting', 'cold') %}<div class="due {{ a.followup.urgency }}" title="{{ a.followup.why }}">{% if a.followup.urgency == 'overdue' %}{{ icon("clock") }} follow-up overdue since {{ a.followup.next_due }}{% elif a.followup.urgency == 'waiting' %}{{ icon("clock") }} follow up on {{ a.followup.next_due }}{% else %}{{ icon("clock") }} {{ a.followup.touches }} follow-ups, no reply · resting{% endif %} <button class="touch" data-id="{{ a.id }}" title="Record that you followed up today; lands in the feedback box">followed up today</button></div>{% endif %}
   </div>
-  {% else %}<p class="sub">Nothing yet. Mark a card as applied, then paste the feedback box to your agent.</p>{% endfor %}
+  {% else %}<p class="sub">Nothing yet. {% if local %}Mark a card as applied to save it here.{% else %}Mark a card as applied, then paste the feedback box to your agent.{% endif %}</p>{% endfor %}
 </aside>
 {% if write %}<script>
 {{ hubwrite_js|safe }}
@@ -373,6 +375,8 @@ dialog p { margin:6px 0 14px; color:var(--muted); font-size:13.5px }
       c.classList.toggle("hidden", !ok);
     });
     var sorted = cards.slice().sort(function(a,b){
+      var pin = (+b.dataset.pinned || 0) - (+a.dataset.pinned || 0);
+      if (pin) return pin;
       if (state.sort === "new") return (b.dataset.seen > a.dataset.seen) ? 1 : (b.dataset.seen < a.dataset.seen ? -1 : (+b.dataset.rank) - (+a.dataset.rank));
       if (state.sort === "company") return a.dataset.companyName.localeCompare(b.dataset.companyName) || (+b.dataset.rank) - (+a.dataset.rank);
       return (+b.dataset.rank) - (+a.dataset.rank);
@@ -392,23 +396,28 @@ dialog p { margin:6px 0 14px; color:var(--muted); font-size:13.5px }
   document.getElementById("minskills").addEventListener("change", function(e){ state.minskills = +e.target.value; apply(); });
   var side = document.getElementById("side");
   document.getElementById("sidebtn").addEventListener("click", function(){ side.classList.toggle("open"); });
-  document.getElementById("sideclose").addEventListener("click", function(){ side.classList.remove("open"); });
-  var ta = document.getElementById("feedback");
+  side.addEventListener("click", function(e){ if (e.target.closest("#sideclose")) side.classList.remove("open"); });
+  var ta = document.getElementById("feedback"), localSaveReady = false;
   var drafts = {}, stages = {}, refs = {}, touches = {}, companyIgnores = {}, sent = {verdicts: {}, refs: {}, companyIgnores: {}};
   try { drafts = JSON.parse(localStorage.getItem("jobradar.feedback") || "{}"); } catch (e) { drafts = {}; }
   try { sent = JSON.parse(localStorage.getItem("jobradar.sent") || "") || sent; } catch (e) {}
+  {% if local %}sent = {verdicts:{}, refs:{}, companyIgnores:{}};{% endif %}
   if (!sent.verdicts) sent.verdicts = {}; if (!sent.refs) sent.refs = {};
   try { stages = JSON.parse(localStorage.getItem("jobradar.stages") || "{}"); } catch (e) { stages = {}; }
   try { refs = JSON.parse(localStorage.getItem("jobradar.referrals") || "{}"); } catch (e) { refs = {}; }
   try { touches = JSON.parse(localStorage.getItem("jobradar.followups") || "{}"); } catch (e) { touches = {}; }
   try { companyIgnores = JSON.parse(localStorage.getItem("jobradar.companyIgnores") || "{}"); } catch (e) { companyIgnores = {}; }
-  document.querySelectorAll("#side button.touch").forEach(function(b){
-    b.addEventListener("click", function(){ if (touches[b.dataset.id]) delete touches[b.dataset.id]; else touches[b.dataset.id] = 1; renderDraft(); });
+  side.addEventListener("click", function(e){
+    var b = e.target.closest('button.touch'); if (!b) return;
+    if (touches[b.dataset.id]) delete touches[b.dataset.id]; else touches[b.dataset.id] = 1; renderDraft();
   });
   function refOn(c){ var b = c.querySelector(".refbtn"); var id = c.dataset.id; return (id in refs) ? !!refs[id] : (id in sent.refs) ? !!sent.refs[id] : b.dataset.server === "1"; }
   document.querySelectorAll("#side select.stage").forEach(function(sel){
     if (stages[sel.dataset.id]) sel.value = stages[sel.dataset.id];
-    sel.addEventListener("change", function(){ stages[sel.dataset.id] = sel.value; renderDraft(); });
+  });
+  side.addEventListener("change", function(e){
+    var sel = e.target.closest('select.stage'); if (!sel) return;
+    stages[sel.dataset.id] = sel.value; renderDraft();
   });
   function renderDraft(){
     var lines = Object.keys(drafts).map(function(id){ var d = drafts[id]; return d.verdict + " " + id + (d.note ? " " + d.note : ""); });
@@ -442,6 +451,7 @@ dialog p { margin:6px 0 14px; color:var(--muted); font-size:13.5px }
       c.classList.toggle("done", done); c.classList.toggle("applied", v === "applied");
     });
     try { localStorage.setItem("jobradar.feedback", JSON.stringify(drafts)); } catch (e) {}
+    {% if local %}if (localSaveReady) scheduleLocalSave();{% endif %}
   }
   cards.forEach(function(c){
     c.querySelectorAll(".fb button[data-verdict]").forEach(function(b){
@@ -540,6 +550,84 @@ dialog p { margin:6px 0 14px; color:var(--muted); font-size:13.5px }
       }).catch(function(e){ sendMsg.textContent = "not sent: " + String(e.message || e); }).then(function(){ sendBtn.disabled = false; });
     });
   }
+  {% if local %}
+  var localConfig = {{ local|tojson }}, localBusy = false, localTimer;
+  var localMsg = document.getElementById('local-status');
+  var pendingKey = 'jobradar.local.pending', pendingMemory = null;
+  function localPending(){
+    if (pendingMemory) return pendingMemory;
+    try { return JSON.parse(localStorage.getItem(pendingKey) || 'null'); } catch(e) { return null; }
+  }
+  function localControls(disabled){
+    document.querySelectorAll('#cards button, #side select, #side .touch, #fit-form button, #clear, #local-save').forEach(function(b){ b.disabled = disabled; });
+    ta.readOnly = disabled;
+  }
+  function scheduleLocalSave(){
+    clearTimeout(localTimer);
+    if (!localBusy && (ta.value.trim() || localPending())) {
+      localMsg.textContent = 'Unsaved changes…';
+      localTimer = setTimeout(saveLocal, 200);
+    }
+  }
+  async function saveLocal(){
+    if (localBusy) return;
+    var pending = localPending();
+    if (!pending && !ta.value.trim()) return;
+    if (!pending) {
+      pending = {request_id: crypto.randomUUID(), text: ta.value};
+      try { localStorage.setItem(pendingKey, JSON.stringify(pending)); } catch(e) {}
+    }
+    pendingMemory = pending;
+    localBusy = true; localControls(true); localMsg.textContent = 'Saving…';
+    try {
+      var response = await fetch('/api/feedback', {method:'POST', headers:{'Content-Type':'application/json', 'X-JobRadar-Token':localConfig.token}, body:JSON.stringify(pending), signal:AbortSignal.timeout(10000)});
+      var result = await response.json();
+      if (!response.ok) {
+        // Validation rejects the whole batch without writing. Allow correction;
+        // uncertain network failures keep their UUID for an idempotent retry.
+        if (response.status === 400) {
+          pendingMemory = null;
+          try { localStorage.removeItem(pendingKey); } catch(e) {}
+        }
+        throw new Error(result.error || 'Save failed');
+      }
+      // Read confirmed server state before clearing the recoverable draft.
+      var refreshed = await fetch('/', {cache:'no-store', signal:AbortSignal.timeout(10000)});
+      if (!refreshed.ok) throw new Error('Saved, but could not refresh. Retry to verify.');
+      var doc = new DOMParser().parseFromString(await refreshed.text(), 'text/html');
+      var serverCards = {};
+      doc.querySelectorAll('#cards .card').forEach(function(c){ serverCards[c.dataset.id] = c; });
+      cards.forEach(function(c){
+        var fresh = serverCards[c.dataset.id];
+        if (!fresh) { c.hidden = true; c.remove(); return; }
+        c.dataset.verdict = fresh.dataset.verdict;
+        c.querySelector('.refbtn').dataset.server = fresh.querySelector('.refbtn').dataset.server;
+        c.querySelector('.tag.referral').dataset.server = fresh.querySelector('.tag.referral').dataset.server;
+      });
+      cards = cards.filter(function(c){ return !!serverCards[c.dataset.id]; });
+      side.innerHTML = doc.getElementById('side').innerHTML;
+      document.getElementById('sidebtn').innerHTML = doc.getElementById('sidebtn').innerHTML;
+      var stats = document.querySelectorAll('.stat b'), freshStats = doc.querySelectorAll('.stat b');
+      stats.forEach(function(s, i){ s.textContent = freshStats[i].textContent; });
+      try { localStorage.removeItem(pendingKey); } catch(e) {}
+      pendingMemory = null;
+      drafts = {}; stages = {}; refs = {}; touches = {}; companyIgnores = {};
+      sent = {verdicts:{}, refs:{}, companyIgnores:{}};
+      renderDraft();
+      localMsg.textContent = 'Saved on this computer';
+    } catch(e) {
+      localMsg.textContent = 'Not confirmed saved: ' + e.message + ' Use Save / retry.';
+    } finally {
+      localBusy = false; localControls(!!localPending());
+      document.getElementById('local-save').disabled = false;
+    }
+  }
+  document.getElementById('local-save').addEventListener('click', saveLocal);
+  window.addEventListener('beforeunload', function(e){
+    if (localBusy || ta.value.trim() || localPending()) { e.preventDefault(); e.returnValue = ''; }
+  });
+  localSaveReady = true;
+  {% endif %}
   renderDraft();
   apply();
 })();

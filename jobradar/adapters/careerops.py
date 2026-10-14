@@ -14,6 +14,7 @@ Providers return list-page data only; enrich() fetches the posting page when no 
 """
 from __future__ import annotations
 
+import datetime as dt
 import hashlib
 import json
 import re
@@ -29,6 +30,41 @@ RUNNER = "scripts/careerops/fetch.mjs"
 PASSTHROUGH_SKIP = {"aggregator", "pace_seconds", "h1b_name"}
 ID_SEGMENT = re.compile(r"^(\d{4,}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$", re.I)
 MAX_PAGE_CHARS = 300_000
+JSONLD_SCRIPT = re.compile(r"<script\b[^>]*\btype\s*=\s*['\"]application/ld\+json['\"][^>]*>(.*?)</script\s*>", re.I | re.S)
+
+
+def parse_eightfold_detail(html: str) -> tuple[str, int | None]:
+    """Read the public JobPosting, excluding Eightfold's scripts and site config."""
+    def postings(value):
+        if isinstance(value, list):
+            for item in value:
+                yield from postings(item)
+        elif isinstance(value, dict):
+            types = value.get("@type", [])
+            types = [types] if isinstance(types, str) else types if isinstance(types, list) else []
+            if "JobPosting" in types:
+                yield value
+            yield from postings(value.get("@graph"))
+
+    for script in JSONLD_SCRIPT.findall(html):
+        try:
+            payload = json.loads(script)
+        except json.JSONDecodeError:
+            continue
+        for posting in postings(payload):
+            description = posting.get("description")
+            if not isinstance(description, str) or not description.strip():
+                continue
+            posted_ts = None
+            try:
+                posted = dt.datetime.fromisoformat(posting["datePosted"])
+                if posted.tzinfo is None:
+                    posted = posted.replace(tzinfo=dt.timezone.utc)
+                posted_ts = int(posted.timestamp())
+            except (KeyError, TypeError, ValueError, OverflowError):
+                pass
+            return description, posted_ts
+    raise AdapterError("eightfold: posting page has no JobPosting description")
 
 
 def build_entry(cfg: CompanyConfig) -> dict[str, Any]:
@@ -98,6 +134,12 @@ class CareerOpsAdapter:
         if raw.description_html.strip() and raw.extra.get("provider") != "amazon":
             return raw
         html = client.get_text(raw.url, fixture_key="detail")
+        if raw.extra.get("provider") == "eightfold":
+            raw.description_html, posted_ts = parse_eightfold_detail(str(html)[:MAX_PAGE_CHARS])
+            if posted_ts is not None:
+                raw.posted_ts = posted_ts
+            raw.extra["enriched"] = "jsonld"
+            return raw
         raw.description_html = str(html)[:MAX_PAGE_CHARS]
         raw.extra["enriched"] = "page"
         return raw

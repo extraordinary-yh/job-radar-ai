@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import fcntl
 import json
 import re
 from pathlib import Path
@@ -32,6 +33,8 @@ def parse_feedback_text(text: str) -> list[dict[str, Any]]:
                 entry["stage"] = str(obj["stage"]).lower()
             if obj.get("resume"):
                 entry["resume"] = str(obj["resume"])
+            if obj.get("applied_on"):
+                entry["applied_on"] = dt.date.fromisoformat(str(obj["applied_on"])).isoformat()
         else:
             parts = line.split(None, 2)
             if len(parts) < 2:
@@ -74,6 +77,7 @@ def append_feedback(path: Path, entries: list[dict[str, Any]], ts: str | None = 
     path.parent.mkdir(parents=True, exist_ok=True)
     stamp = ts or dt.datetime.now().replace(microsecond=0).isoformat()
     with path.open("a") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
         for e in entries:
             if e.get("kind") in KINDS:
                 rec = {"ts": stamp, "kind": e["kind"]}
@@ -99,6 +103,8 @@ def append_feedback(path: Path, entries: list[dict[str, Any]], ts: str | None = 
                 rec["stage"] = e["stage"]
             if e.get("resume"):
                 rec["resume"] = e["resume"]
+            if e.get("applied_on"):
+                rec["applied_on"] = dt.date.fromisoformat(str(e["applied_on"])).isoformat()
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
     return len(entries)
 
@@ -118,7 +124,7 @@ def latest_verdicts(path: Path) -> dict[str, dict[str, Any]]:
         prev = out.get(e["job_id"], {})
         merged = {**prev, **e}
         merged["stage"] = e.get("stage") or (prev.get("stage") if e.get("verdict") == "applied" else None) or ("applied" if e.get("verdict") == "applied" else None)
-        merged["applied_on"] = prev.get("applied_on") or (str(e.get("ts", ""))[:10] if e.get("verdict") == "applied" else None)
+        merged["applied_on"] = e.get("applied_on") or prev.get("applied_on") or (str(e.get("ts", ""))[:10] if e.get("verdict") == "applied" else None)
         out[e["job_id"]] = merged
     return out
 
@@ -189,6 +195,11 @@ def applied_archive(path: Path, seen: dict[str, dict[str, Any]], applications_di
             continue
         rec = seen.get(job_id, {})
         job_dir = job_id.replace(":", "-")
+        if applications_dir is not None:
+            confirmation = Path(applications_dir) / job_dir / "submission.json"
+            if confirmation.exists():
+                evidence = json.loads(confirmation.read_text())
+                rec = {**{k: evidence[k] for k in ("title", "company", "url") if evidence.get(k)}, **rec}
         has_pdf = applications_dir is not None and (Path(applications_dir) / job_dir / "resume.pdf").exists()
         resume_path = f"../data/applications/{job_dir}/resume.pdf" if has_pdf else ""
         if applications_dir is not None:

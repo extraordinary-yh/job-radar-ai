@@ -49,6 +49,11 @@ def cmd_render(args) -> int:
     return cmd_run(args)
 
 
+def cmd_serve(args) -> int:
+    from .local import serve
+    return serve(repo_root(), args.port, args.date)
+
+
 def cmd_status(args) -> int:
     root = repo_root()
     snaps = list_snapshots(root / "data" / "jobs")
@@ -209,7 +214,7 @@ def cmd_followups(args) -> int:
     root = repo_root()
     fb = root / "data" / "feedback.jsonl"
     seen = SeenStore(root / "data" / "seen.json").data["jobs"]
-    rows = followup.annotate_archive(applied_archive(fb, seen), args.date)
+    rows = followup.annotate_archive(applied_archive(fb, seen, root / "data/applications"), args.date)
     print(followup.format_rows(rows, only_due=args.due))
     return 0
 
@@ -237,11 +242,16 @@ def cmd_feedback(args) -> int:
 
 
 def cmd_open(args) -> int:
-    index = repo_root() / "reports" / "index.html"
+    root = repo_root()
+    pub = load_publish_config(root / "config" / "publish.yaml")
+    opener = "open" if sys.platform == "darwin" else "xdg-open"
+    if pub.get("feedback_mode") == "local" and pub.get("local_board_url"):
+        subprocess.run([opener, str(pub["local_board_url"])], check=False)
+        return 0
+    index = root / "reports" / "index.html"
     if not index.exists():
         print("no report yet; run `uv run jobradar run` first")
         return 1
-    opener = "open" if sys.platform == "darwin" else "xdg-open"
     subprocess.run([opener, str(index)], check=False)
     return 0
 
@@ -309,6 +319,11 @@ def cmd_notify(args) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="jobradar", description="Daily job scanner ranked against your profile.")
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    local = sub.add_parser("serve", help="local job board with automatic feedback saving")
+    local.add_argument("--port", type=int, default=8766)
+    local.add_argument("--date", help="saved snapshot date (default: latest available)")
+    local.set_defaults(func=cmd_serve)
 
     r = sub.add_parser("run", help="fetch, score, and render today's report")
     r.add_argument("--date", default=_today())
