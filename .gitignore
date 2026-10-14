@@ -21,3 +21,7 @@ dist/
 *.pem
 *.key
 /config/
+
+# Learner sessions and coach-only case facts remain private.
+/sessions/
+/coaching/

@@ -29,7 +29,7 @@ NYC = ("new york", "nyc", "manhattan", "brooklyn")
 BAY = ("san francisco", "mountain view", "sunnyvale", "menlo park", "palo alto", "san jose",
        "redwood city", "cupertino", "south san francisco", "oakland", "berkeley", "santa clara",
        "foster city", "san mateo", "bay area", "fremont", "san bruno", "san carlos", "burlingame",
-       "us-sf", "sf hq", "sf bay")
+       "us-sf", "sf hq", "sf bay", "los gatos")
 _US_TOKEN_RE = re.compile(r"(^|[\s,/(\-])(us|u\.s\.|usa)([\s,/)\-]|$)")
 US_STATES = {
     "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS",
@@ -117,7 +117,7 @@ _PLUS_RE = re.compile(r"(\d{1,2})\s*(?:\+|plus|or more)\s*" + _YEARS, re.I)
 _SINGLE_RE = re.compile(r"(\d{1,2})\s*" + _YEARS, re.I)
 _CONTEXT_RE = re.compile(r"experience|background|industry|professional|working|hands-on|develop|engineer|build|program|"
                          r"coding|design|ship|track record|\bof [a-z]|\bin [a-z]", re.I)
-_NOT_EXPERIENCE_RE = re.compile(r"^\s*(ago|old|of age|warranty)", re.I)
+_NOT_EXPERIENCE_RE = re.compile(r"^\s*(ago|old|of age|warranty|of (?:our|the) (?:company|business|journey)\b)", re.I)
 
 
 def _in_context(text: str, start: int, end: int) -> bool:
@@ -198,7 +198,7 @@ def extract_salary(text: str) -> tuple[int | None, int | None]:
 
 
 # ---------- level ----------
-def level_from_title(title: str) -> str:
+def level_from_title(title: str, company: str = "") -> str:
     t = title.lower()
     if re.search(r"\bintern(ship)?\b|\bco-?op\b", t):
         return "intern"
@@ -206,6 +206,13 @@ def level_from_title(title: str) -> str:
         return "new_grad"
     if re.search(r"\b(manager|director|head of|vp|vice president|chief)\b|team lead", t):
         return "manager"
+    if company.casefold() == "netflix":
+        # Netflix's numeric engineer titles encode level: L5 is senior,
+        # L6 is staff, and L7 has organization-wide technical-lead scope.
+        # A combined 4/5 posting remains eligible at its lower advertised level.
+        numeric = re.search(r"\bengineer(?:ing)?\s*\(?l?([4-7])\b", t)
+        if numeric:
+            return {"4": "mid", "5": "senior", "6": "staff", "7": "staff"}[numeric[1]]
     if re.search(r"\b(senior|sr\.?|lead)\b", t):
         return "senior"
     if "member of technical staff" in t or re.search(r"\bmts\b", t):
@@ -306,7 +313,7 @@ def renormalize(job: Job) -> None:
     # retain the parsed years/flags needed to stay excluded, so never replace
     # those durable fields with empty parser output during a report re-render.
     if not full.strip():
-        job.level = level_from_title(job.title)
+        job.level = level_from_title(job.title, job.company)
         job.location_class = classify_location(job.locations)
         job.country = country_of(job.location_class, job.locations)
         return
@@ -316,7 +323,7 @@ def renormalize(job: Job) -> None:
     job.yoe_pref = extract_yoe(qpref)[0]
     job.salary_min, job.salary_max = extract_salary(full)
     job.flags = detect_flags(full, qmin, job.title)
-    job.level = level_from_title(job.title)
+    job.level = level_from_title(job.title, job.company)
     job.location_class = classify_location(job.locations)
     job.country = country_of(job.location_class, job.locations)
 
@@ -334,7 +341,7 @@ def normalize(raw: RawJob, company_name: str) -> Job:
         location_class=loc_class, country=country_of(loc_class, raw.locations),
         arrangement=detect_arrangement(full, raw.arrangement_hint, raw.locations),
         description_text=desc, responsibilities=resp, qualifications_min=qmin,
-        qualifications_pref=qpref, level=level_from_title(raw.title), posted_at=ts_to_date(raw.posted_ts),
+        qualifications_pref=qpref, level=level_from_title(raw.title, company_name), posted_at=ts_to_date(raw.posted_ts),
     )
     job.yoe_min, job.yoe_max = extract_yoe(qmin or full)
     job.yoe_pref = extract_yoe(qpref)[0]

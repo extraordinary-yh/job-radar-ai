@@ -2,3 +2,6 @@ source_repo: ''
 reports_repo: ''
 branch: main
 pages_url: ''
+feedback_mode: local
+local_board_url: http://127.0.0.1:8766/
+pinned_jobs: []

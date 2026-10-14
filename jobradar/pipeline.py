@@ -181,10 +181,12 @@ def run(root: Path, date: str, *, offline: bool = False, fixtures_root: Path | N
         known = connections_mod.annotate(jobs, root, warnings=sidecar_warnings)
     from .publish import load_publish_config
     pub = load_publish_config(root / "config" / "publish.yaml")
-    write = {"repo": str(pub["source_repo"]), "branch": str(pub.get("source_branch", "main"))} if pub.get("source_repo") else None
+    local_board_url = pub.get("local_board_url") if pub.get("feedback_mode") == "local" else None
+    write = ({"repo": str(pub["source_repo"]), "branch": str(pub.get("source_branch", "main"))}
+             if pub.get("source_repo") and not local_board_url else None)
     html = render_report(jobs, meta, prefs, date, archive=archive, referral_marks=referral_marks(fb),
                          referral_companies=referral_companies(fb, seen_jobs), connections=known, reposts=repost_index,
-                         write=write)
+                         write=write, local_board_url=local_board_url, pinned_jobs=pub.get("pinned_jobs"))
     result.report_path, _ = write_report(html, root / "reports", date)
     result.warnings += sidecar_warnings
     result.jobs = jobs

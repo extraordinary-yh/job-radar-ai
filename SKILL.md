@@ -25,6 +25,7 @@ Run `uv run jobradar render --date YYYY-MM-DD --review data/reviews/YYYY-MM-DD.j
 Review the rendered explanation. Scores are preferences, not hiring probabilities.
 
 ## Feedback
+Use `uv run jobradar serve` for the local board at `http://127.0.0.1:8766/`. Wait for “Saved on this computer” after a change. Failed saves retain a recoverable draft; retry instead of assuming persistence. A static report keeps drafts until imported.
 Record user verdicts with `jobradar feedback`. Change ranking rules only from actual preferences.
 Run `uv run jobradar eval` before and after a ranking change. Save the reason locally.
 Record applied status only after a confirmed submission. Never apply or send outreach as part of a scan.

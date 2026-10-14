@@ -100,13 +100,17 @@ def render_report(jobs: list[Job], meta: dict[str, Any], prefs: Preferences, dat
                   referral_companies: set[str] | None = None,
                   connections: dict[str, list[dict[str, str]]] | None = None,
                   reposts: dict[str, dict[str, Any]] | None = None,
-                  write: dict[str, Any] | None = None) -> str:
+                  write: dict[str, Any] | None = None,
+                  local: dict[str, Any] | None = None,
+                  local_board_url: str | None = None,
+                  pinned_jobs: list[str] | None = None) -> str:
     """`write` = {repo: "owner/name", branch, api?} turns on the feedback box's Send-to-repo button: the page commits
     its draft lines to data/feedback.jsonl through the GitHub Contents API with a token kept in the browser (the
     same module and token the study hub uses), so the user never pastes the box to an agent."""
     effective = float(prefs.candidate.get("effective_yoe", 2))
+    pinned = set(pinned_jobs or [])
     visible = [j for j in jobs if not j.excluded and not j.hidden]          # applied jobs stay in place, muted
-    visible.sort(key=lambda j: (-j.rank_score, -j.score, j.company, j.title))
+    visible.sort(key=lambda j: (j.id not in pinned, -j.rank_score, -j.score, j.company, j.title))
     applied = sorted((j for j in jobs if j.verdict == "applied" and not j.excluded), key=lambda j: j.company)
     archive = archive if archive is not None else [
         {"id": j.id, "title": j.title, "company": j.company, "url": j.url, "status": j.status, "applied_on": "", "note": "", "first_seen": j.first_seen}
@@ -129,9 +133,11 @@ def render_report(jobs: list[Job], meta: dict[str, Any], prefs: Preferences, dat
         date=date, generated_at=meta.get("generated_at", ""), sources=meta.get("sources", []),
         warnings=meta.get("warnings", []), counts=counts, companies=companies, metros=metros,
         effective_yoe=effective, maxes=maxes,
-        cards=[_card(j, effective, maxes, prefs.referrals, referral_marks, referral_companies, connections, reposts) for j in visible],
+        cards=[{**_card(j, effective, maxes, prefs.referrals, referral_marks, referral_companies, connections, reposts),
+                "pinned": j.id in pinned} for j in visible],
         archive=archive, excluded_groups=excluded_groups,
-        write=write or None, hubwrite_js=(TEMPLATES / "hubwrite.js").read_text() if write else "",
+        local=local, local_board_url=local_board_url, write=write or None,
+        hubwrite_js=(TEMPLATES / "hubwrite.js").read_text() if write else "",
     )
 
 

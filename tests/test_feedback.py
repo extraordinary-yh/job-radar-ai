@@ -77,6 +77,31 @@ def test_stage_lines_and_latest_stage(tmp_path):
         parse_feedback_text("stage g:1 nope")
 
 
+def test_confirmed_submission_date_corrects_click_date_and_survives_stage_update(tmp_path):
+    ledger = tmp_path / "feedback.jsonl"
+    append_feedback(ledger, parse_feedback_text("applied g:1"), ts="2026-10-02T18:45:00")
+    confirmed = parse_feedback_text('{"job_id":"g:1","verdict":"applied","applied_on":"2026-09-18","note":"Portal evidence"}')
+    append_feedback(ledger, confirmed, ts="2026-10-02T18:50:00")
+    append_feedback(ledger, parse_feedback_text("stage g:1 phone"), ts="2026-10-03T09:00:00")
+    assert latest_verdicts(ledger)["g:1"]["applied_on"] == "2026-09-18"
+    assert applied_archive(ledger, {})[0]["applied_on"] == "2026-09-18"
+    assert json.loads(ledger.read_text().splitlines()[1])["ts"] == "2026-10-02T18:50:00"
+    with pytest.raises(ValueError):
+        parse_feedback_text('{"job_id":"g:1","applied_on":"2026-02-30"}')
+
+
+def test_archive_keeps_confirmed_job_details_after_scan_history_expires(tmp_path):
+    ledger = tmp_path / "feedback.jsonl"
+    append_feedback(ledger, [{"job_id": "microsoft:200052301", "verdict": "applied", "applied_on": "2026-09-02"}])
+    apps = tmp_path / "applications"
+    record = apps / "microsoft-200052301"
+    record.mkdir(parents=True)
+    (record / "submission.json").write_text(json.dumps({"title": "Software Engineer II", "company": "Microsoft", "url": "https://example.com"}))
+    entry = applied_archive(ledger, {}, apps)[0]
+    assert entry["title"] == "Software Engineer II" and entry["company"] == "Microsoft"
+    assert entry["status"] == "unknown" and entry["applied_on"] == "2026-09-02"
+
+
 def test_referral_and_tailor_lines_parse_and_do_not_touch_verdicts(tmp_path):
     from jobradar.feedback import pending_tailors, referral_companies, referral_marks
     entries = parse_feedback_text("referral figma:1\nreferral figma:2 none\ntailor stripe:9\napplied figma:1")
